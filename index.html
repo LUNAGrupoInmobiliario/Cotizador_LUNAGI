@@ -146,19 +146,35 @@
     @page { size: A4; margin: 15mm 12mm; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     
-    /* Print: mostrar solo Cliente/Asesor + Amortización + Legal */
-    header, .page-title, .summary-row, .fx-sub, .fx-row, #mxnEq, #alertInconsistencia { display: none !important; }
+    /* Print: ocultar controles, mostrar header corporativo + secciones marcadas */
+    .page-title, .summary-row, .fx-sub, .fx-row, #mxnEq, #alertInconsistencia { display: none !important; }
     main > * { display: none !important; }
     main > .print-keep { display: block !important; }
 
-    /* Permitir que la tabla se parta en páginas sin dejar “cuadros” en blanco */
+    /* Header visible con estilo corporativo en impresión */
+    header {
+      display: grid !important;
+      position: relative !important;
+      background: #134289 !important;
+      padding: 10px 24px !important;
+      box-shadow: none !important;
+      border-bottom: 3px solid #1e56a8 !important;
+      margin-bottom: 14px !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+    }
+    header .logo-svg { height: 38px !important; max-width: 220px !important; }
+    header .logo-right { height: 38px !important; max-width: 200px !important; }
+    header .header-center-logo img { height: 38px !important; }
+
+    /* Permitir que la tabla se parta en páginas sin dejar "cuadros" en blanco */
     .card.print-splittable { break-inside: auto !important; page-break-inside: auto !important; }
     .table-wrapper { overflow: visible !important; }
 
     table { page-break-inside: auto; }
     thead { display: table-header-group; }
     tr { break-inside: avoid; page-break-inside: avoid; }
-header { position: relative !important; }
     .btn-row { display: none !important; }
     body { background: white !important; }
     main { padding: 0 !important; max-width: 100% !important; }
@@ -253,49 +269,6 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
     .locked-other { display: none !important; }
   }
 </style>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script>
-  const FB_CONFIG = {
-    apiKey: "AIzaSyCJhR10bVifVG50RJ20GPDxkPEw6RpJqCM",
-    authDomain: "formulario-operativo-luna-gi.firebaseapp.com",
-    projectId: "formulario-operativo-luna-gi",
-    storageBucket: "formulario-operativo-luna-gi.firebasestorage.app",
-    messagingSenderId: "833936480389",
-    appId: "1:833936480389:web:29ca5d4e04da4b30d8f1ec"
-  };
-  if (!firebase.apps.length) { firebase.initializeApp(FB_CONFIG); }
-  const _db = firebase.firestore();
-
-  let _lastLogKey = null, _lastLogTime = 0;
-  function bitLog(inversionista, asesor, proyecto) {
-    if (!_db) return;
-    // Anti-duplicados: ignorar si mismo inversionista en menos de 10 segundos
-    const key = (inversionista||'') + '|' + (asesor||'') + '|' + (proyecto||'');
-    const now = Date.now();
-    if (key === _lastLogKey && now - _lastLogTime < 10000) {
-      console.log('bitLog: duplicado ignorado');
-      return;
-    }
-    _lastLogKey = key;
-    _lastLogTime = now;
-    const ua = navigator.userAgent || '';
-    const esMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-    _db.collection('bitacora').add({
-      formulario: 'Cotizador',
-      nombre: inversionista || '—',
-      asesor: asesor || '—',
-      proyecto: proyecto || '—',
-      dispositivo: esMobile ? 'Móvil' : 'Escritorio',
-      fecha: new Date().toISOString(),
-      ts: firebase.firestore.FieldValue.serverTimestamp(),
-      ua: ua.slice(0, 200)
-    }).then(() => console.log('✅ Cotizacion registrada en bitácora'))
-      .catch(e => console.warn('bitLog error:', e));
-  }
-</script>
 </head>
 <body>
 
@@ -1306,16 +1279,6 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
       if (typeof window.print !== 'function') {
         throw new Error('print_not_supported');
       }
-      // Registrar en bitácora Firebase
-      try {
-        const inv = document.getElementById('nombreInversionista').value || '—';
-        const asesor = (document.getElementById('nombreAsesorSel') && document.getElementById('nombreAsesorSel').value !== '__otro__')
-          ? (document.getElementById('nombreAsesorSel').value || document.getElementById('nombreAsesor').value || '—')
-          : (document.getElementById('nombreAsesor').value || '—');
-        const proyecto = getProyectoValue() || '—';
-        bitLog(inv, asesor, proyecto);
-      } catch(e) { console.warn('bitLog pre-print error:', e); }
-
       window.print();
     } catch (e) {
       if (isIOS) {

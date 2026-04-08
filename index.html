@@ -143,7 +143,19 @@
 
 
   @media print {
-    @page { size: A4; margin: 15mm 12mm; }
+    @page {
+      size: A4;
+      margin: 10mm 12mm 15mm 12mm;
+      /* Elimina encabezado y pie nativos del navegador */
+      @top-left   { content: none; }
+      @top-center { content: none; }
+      @top-right  { content: none; }
+      @bottom-left  { content: none; }
+      @bottom-center { content: counter(page); font-family: 'Sora', sans-serif; font-size: 9pt; color: #5a6a90; }
+      @bottom-right { content: none; }
+    }
+    /* Chromium: oculta cabecera/pie nativos del sistema */
+    @page { margin-top: 10mm; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     
     /* Print: ocultar controles, mostrar header corporativo + secciones marcadas */
@@ -1273,7 +1285,8 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
     const proj = safeName(getProyectoValue() || 'Proyecto');
 
     const oldTitle = document.title;
-    document.title = `Cotizacion_LUNA_GrupoInmobiliario_${proj}_${inv}`;
+    // Título vacío = Chrome no muestra nada en el encabezado nativo
+    document.title = ' ';
 
     try {
       if (typeof window.print !== 'function') {
@@ -1311,7 +1324,17 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
   if (typeof syncAsesorPrint === 'function') syncAsesorPrint();
 
 
-// Asegura que los bloques "Otro (escribir)" se muestren si el navegador recuerda la selección.
+// Suprime encabezado/pie nativos del navegador durante impresión
+  let _printTitle = '';
+  window.addEventListener('beforeprint', () => {
+    _printTitle = document.title;
+    document.title = ' ';
+  });
+  window.addEventListener('afterprint', () => {
+    document.title = _printTitle;
+  });
+
+  // Asegura que los bloques "Otro (escribir)" se muestren si el navegador recuerda la selección.
   window.addEventListener('DOMContentLoaded', () => {
     try {
       if (typeof toggleProyectoOtro === 'function') toggleProyectoOtro();

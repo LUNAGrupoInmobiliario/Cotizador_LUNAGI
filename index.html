@@ -125,6 +125,13 @@
   .info-note { background: var(--accent); border-left: 3px solid var(--blue-mid); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 12px; color: var(--text-muted); margin-top: 12px; }
 
   .check-inline { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--text-muted); font-size: 12px; letter-spacing: 0; text-transform: none; }
+
+  /* Toggle enganche % / $ */
+  .enganche-toggle-row { display: flex; align-items: center; gap: 8px; }
+  .toggle-mode { display: flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .toggle-btn { padding: 6px 12px; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600; background: var(--white); color: var(--text-muted); border: none; cursor: pointer; transition: all 0.2s; }
+  .toggle-btn.active { background: var(--navy); color: #fff; }
+  .toggle-btn:hover:not(.active) { background: var(--accent); }
   .check-inline input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue-mid); }
   .check-inline span { line-height: 1.2; }
 
@@ -162,6 +169,8 @@
     .page-title, .fx-sub, .fx-row, #alertInconsistencia { display: none !important; }
     main > * { display: none !important; }
     main > .print-keep { display: block !important; }
+    /* Summary row override: must come AFTER the block rule */
+    main > .summary-row.print-keep { display: grid !important; }
 
     /* Header visible con estilo corporativo en impresión */
     header {
@@ -218,6 +227,19 @@
   padding: 16px 18px !important;
 }
 #footerLegal .legal-title{ text-align:center !important; }
+    /* Títulos de sección nunca quedan solos al final de página */
+    .card-title {
+      break-after: avoid !important;
+      page-break-after: avoid !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    /* El card completo (no-splittable) no se parte */
+    .card:not(.print-splittable) {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    /* Summary row tampoco se parte */
     .summary-row { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; margin-bottom: 12px !important; break-inside: avoid !important; page-break-inside: avoid !important; }
     .summary-card { border: 1px solid #999 !important; }
     .summary-card.accent-green { background: #00b87a !important; }
@@ -468,8 +490,17 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
         <input type="text" id="apartado" value="0" inputmode="decimal" autocomplete="off" onfocus="unformatMoney('apartado')" onblur="formatMoney('apartado'); calcular()" oninput="calcular()" onchange="calcular()">
       </div>
       <div class="field">
-        <label>% Enganche</label>
-        <input type="number" id="tasaEnganche" value="0" min="0" max="100" step="1" oninput="calcular()" onchange="calcular()">
+        <label>Enganche</label>
+        <div class="enganche-toggle-row">
+          <div class="toggle-mode" id="engancheModeToggle">
+            <button type="button" class="toggle-btn active" id="btnEnganchePct" onclick="setEngancheMode('pct')">%</button>
+            <button type="button" class="toggle-btn" id="btnEnganchePesos" onclick="setEngancheMode('pesos')">$</button>
+          </div>
+          <input type="number" id="tasaEnganche" value="0" min="0" max="100" step="1" oninput="calcular()" onchange="calcular()" style="flex:1;">
+          <input type="text" id="enganchePesos" value="0" inputmode="decimal" autocomplete="off" style="flex:1;display:none;"
+            onfocus="unformatMoney('enganchePesos')" onblur="formatMoney('enganchePesos'); calcular()" oninput="calcular()" onchange="calcular()">
+        </div>
+        <div class="field-hint" id="engancheModeHint">Porcentaje sobre el precio de la propiedad</div>
       </div>
       <div class="field">
         <label>Tasa de Interés Anual (%)</label>
@@ -1005,6 +1036,37 @@ function initFechas() {
   }
 
   
+function setEngancheMode(mode) {
+  window._engancheMode = mode;
+  const btnPct = document.getElementById('btnEnganchePct');
+  const btnPesos = document.getElementById('btnEnganchePesos');
+  const inputPct = document.getElementById('tasaEnganche');
+  const inputPesos = document.getElementById('enganchePesos');
+  const hint = document.getElementById('engancheModeHint');
+
+  if (mode === 'pct') {
+    btnPct.classList.add('active');
+    btnPesos.classList.remove('active');
+    inputPct.style.display = '';
+    inputPesos.style.display = 'none';
+    if (hint) hint.textContent = 'Porcentaje sobre el precio de la propiedad';
+  } else {
+    btnPesos.classList.add('active');
+    btnPct.classList.remove('active');
+    inputPesos.style.display = '';
+    inputPct.style.display = 'none';
+    if (hint) hint.textContent = 'Monto fijo del enganche en ' + (window._moneda || 'MXN');
+    // Si el campo de pesos está vacío, pre-llenar con el valor calculado del %
+    const precio = Math.max(0, parseMoney(document.getElementById('precio').value));
+    const pct = Math.max(0, getNum('tasaEnganche') / 100);
+    if (precio > 0 && pct > 0 && getNum('enganchePesos') === 0) {
+      document.getElementById('enganchePesos').value = String(precio * pct);
+      formatMoney('enganchePesos');
+    }
+  }
+  calcular();
+}
+
 function calcular() {
   // Auto precio desde m² (Información del Lote)
   const precioM2 = Math.max(0, getNum('precioM2'));
@@ -1046,7 +1108,15 @@ function calcular() {
 
 const apartadoRaw = Math.max(0, getNum('apartado'));
     const apartado = Math.min(apartadoRaw, precio); // el apartado no debería exceder el precio
-    const pctEnganche = Math.min(1, Math.max(0, getNum('tasaEnganche') / 100));
+    // Modo enganche: % o pesos
+    const engancheMode = window._engancheMode || 'pct';
+    let pctEnganche;
+    if (engancheMode === 'pct') {
+      pctEnganche = Math.min(1, Math.max(0, getNum('tasaEnganche') / 100));
+    } else {
+      // En pesos: calcular % equivalente sobre precio para usar la misma fórmula
+      pctEnganche = precio > 0 ? Math.min(1, Math.max(0, getNum('enganchePesos') / precio)) : 0;
+    }
     const tasaAnual = Math.max(0, getNum('tasaAnual') / 100);
     const plazo = Math.max(1, Math.round(getNum('plazo')));
     // Guard: si no hay precio o plazo válido, no generes tabla
@@ -1238,6 +1308,8 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
   set('precio','0');
   set('apartado','0');
   set('tasaEnganche','0');
+  set('enganchePesos','0');
+  setEngancheMode('pct');
   set('tasaAnual','0');
   set('plazo','0');
   set('tasaComision','0');

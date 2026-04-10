@@ -159,7 +159,7 @@
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     
     /* Print: ocultar controles, mostrar header corporativo + secciones marcadas */
-    .page-title, .summary-row, .fx-sub, .fx-row, #mxnEq, #alertInconsistencia { display: none !important; }
+    .page-title, .fx-sub, .fx-row, #alertInconsistencia { display: none !important; }
     main > * { display: none !important; }
     main > .print-keep { display: block !important; }
 
@@ -218,6 +218,7 @@
   padding: 16px 18px !important;
 }
 #footerLegal .legal-title{ text-align:center !important; }
+    .summary-row { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; margin-bottom: 12px !important; break-inside: avoid !important; page-break-inside: avoid !important; }
     .summary-card { border: 1px solid #999 !important; }
     .summary-card.accent-green { background: #00b87a !important; }
     .summary-card.accent-blue { background: #134289 !important; }
@@ -519,7 +520,7 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
     </div>
   </div>
 
-  <div class="summary-row">
+  <div class="summary-row print-keep">
     <div class="summary-card">
       <div class="s-label">Precio Propiedad</div>
       <div class="s-value" id="s-precio">—</div>

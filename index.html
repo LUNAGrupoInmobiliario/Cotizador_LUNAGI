@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 <title>Cotizador de Lote de Inversión — LUNA Grupo Inmobiliario</title>
+
 <!-- Favicons -->
   <link rel="icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -15,9 +16,11 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <!-- Firebase SDK para Bitácora Luna GI -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <style>
   :root {
     --navy: #134289;
@@ -44,7 +47,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Sora', sans-serif; background: #eef2ff; color: var(--text); min-height: 100vh; -webkit-text-size-adjust: 100%; }
-  header {
+  header { 
     background: var(--navy);
     padding: calc(18px + env(safe-area-inset-top)) calc(40px + env(safe-area-inset-right)) 18px calc(40px + env(safe-area-inset-left));
     display: grid;
@@ -57,11 +60,13 @@
   .logo-wrap { display: flex; align-items: center; gap: 12px; justify-self: start; }
   .header-center-logo { justify-self: center; display: flex; align-items: center; }
   .header-right { justify-self: end; display: flex; align-items: center; justify-content: flex-end; }
+
   .header-center-logo img { height: var(--mark-h); width: auto; opacity: 0.95; }
   @media (max-width: 768px) { .header-center-logo img { height: var(--mark-h-mobile); } }
   @media (max-width: 420px) { .header-center-logo img { height: var(--mark-h-xs); } .header-badge { display: none; } }
   .logo-svg { display:block; height: var(--logo-h); width: auto; max-width: min(520px, 44vw); }
   .logo-right { display:block; height: var(--logo-h); width:auto; max-width: min(520px, 44vw); }
+
   .logo-fallback { display:none; color:#fff; font-weight:700; letter-spacing:1px; font-size:16px; }
   .header-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 16px; color: #fff; font-size: 12px; font-weight: 500; letter-spacing: 1px;  justify-self: end; }
   main { max-width: 1100px; margin: 0 auto; padding: 36px calc(24px + env(safe-area-inset-right)) 60px calc(24px + env(safe-area-inset-left)); }
@@ -80,14 +85,15 @@
       padding: calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));
     }
     .logo-svg { height: var(--logo-h-mobile); max-width: 220px; }
-    .logo-right { height: var(--logo-h-mobile); max-width: 220px; }
+  .logo-right { height: var(--logo-h-mobile); max-width: 220px; }
     .header-badge { font-size: 11px; padding: 5px 12px; }
     main { padding: 24px 16px 50px; }
     .card { padding: 22px 20px; }
   }
+
   @media (max-width: 420px) {
     .logo-svg { height: var(--logo-h-xs); max-width: 200px; }
-    .logo-right { height: var(--logo-h-xs); max-width: 200px; }
+  .logo-right { height: var(--logo-h-xs); max-width: 200px; }
     .header-badge { display: none; }
   }
   .field { display: flex; flex-direction: column; gap: 7px; }
@@ -102,8 +108,10 @@
   .summary-card .s-value { font-family: 'DM Mono', monospace; font-size: 17px; font-weight: 600; color: #fff; }
   .summary-card.accent-green { background: linear-gradient(135deg, #00a36c, #00cc88); }
   .summary-card.accent-blue { background: linear-gradient(135deg, var(--blue), var(--blue-light)); }
+
   .alert { display:none; margin: 0 0 24px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(217,48,37,0.25); background: var(--danger-bg); color: var(--danger); font-size: 13px; }
   .alert strong { font-weight: 700; }
+
   .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead th { background: var(--navy); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
@@ -120,8 +128,9 @@
   .btn-outline:hover { background: var(--accent); }
   .divider { height: 1px; background: var(--border); margin: 24px 0; }
   .info-note { background: var(--accent); border-left: 3px solid var(--blue-mid); border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+
   .check-inline { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--text-muted); font-size: 12px; letter-spacing: 0; text-transform: none; }
-  /* Toggle enganche % / $ */
+
   .enganche-toggle-row { display: flex; align-items: center; gap: 8px; }
   .toggle-mode { display: flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .toggle-btn { padding: 6px 12px; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600; background: var(--white); color: var(--text-muted); border: none; cursor: pointer; transition: all 0.2s; }
@@ -129,6 +138,7 @@
   .toggle-btn:hover:not(.active) { background: var(--accent); }
   .check-inline input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue-mid); }
   .check-inline span { line-height: 1.2; }
+
   .inapp-banner{
     max-width:1100px;
     margin: 10px auto 0;
@@ -140,18 +150,37 @@
     font-size: 12.5px;
     line-height: 1.35;
   }
+
   @media print {
-    @page { size: A4; margin: 15mm 12mm; }
+    @page {
+      size: A4;
+      margin: 10mm 12mm 15mm 12mm;
+    }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    header, .page-title, .summary-row, .fx-sub, .fx-row, #mxnEq, #alertInconsistencia { display: none !important; }
+    .page-title, .fx-sub, .fx-row, #alertInconsistencia { display: none !important; }
     main > * { display: none !important; }
     main > .print-keep { display: block !important; }
+    main > .summary-row.print-keep { display: grid !important; }
+    header {
+      display: grid !important;
+      position: relative !important;
+      background: #134289 !important;
+      padding: 10px 24px !important;
+      box-shadow: none !important;
+      border-bottom: 3px solid #1e56a8 !important;
+      margin-bottom: 14px !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+    }
+    header .logo-svg { height: 38px !important; max-width: 220px !important; }
+    header .logo-right { height: 38px !important; max-width: 200px !important; }
+    header .header-center-logo img { height: 38px !important; }
     .card.print-splittable { break-inside: auto !important; page-break-inside: auto !important; }
     .table-wrapper { overflow: visible !important; }
     table { page-break-inside: auto; }
     thead { display: table-header-group; }
     tr { break-inside: avoid; page-break-inside: avoid; }
-    header { position: relative !important; }
     .btn-row { display: none !important; }
     body { background: white !important; }
     main { padding: 0 !important; max-width: 100% !important; }
@@ -180,6 +209,17 @@
       padding: 16px 18px !important;
     }
     #footerLegal .legal-title{ text-align:center !important; }
+    .card-title {
+      break-after: avoid !important;
+      page-break-after: avoid !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    .card:not(.print-splittable) {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    .summary-row { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; margin-bottom: 12px !important; break-inside: avoid !important; page-break-inside: avoid !important; }
     .summary-card { border: 1px solid #999 !important; }
     .summary-card.accent-green { background: #00b87a !important; }
     .summary-card.accent-blue { background: #134289 !important; }
@@ -194,6 +234,7 @@
     .logo-svg { height: 40px !important; max-width: 240px !important; }
     header { padding: 12px 20px !important; }
   }
+
   .fx-row { display: flex; gap: 10px; align-items: center; }
   .fx-row input[type="number"] { flex: 1; }
   .btn-mini { padding: 10px 14px; font-size: 12px; border-radius: 10px; white-space: nowrap; }
@@ -205,6 +246,7 @@
   .legal-title { font-size: 12px; font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase; color: var(--blue-mid); margin-bottom: 10px; }
   .legal-body { font-size: 12.5px; line-height: 1.55; color: var(--text-muted); }
   .legal-body p { margin: 8px 0; }
+
   @media (max-width: 768px) {
     input[type="text"], input[type="number"], input[type="date"], select { font-size: 16px; }
     .btn { padding: 14px 18px; }
@@ -212,18 +254,24 @@
     header { padding: calc(14px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) 14px calc(20px + env(safe-area-inset-left)); }
     main { padding: 24px calc(16px + env(safe-area-inset-right)) 50px calc(16px + env(safe-area-inset-left)); }
   }
+
   @media (hover: none) and (pointer: coarse) {
     input[type="text"], input[type="number"], input[type="date"], select { font-size: 16px; }
   }
-  input[readonly] { background: var(--surface); cursor: not-allowed; }
-  .field-hint { font-size: 11px; color: var(--text-muted); margin-top: -2px; }
+
+input[readonly] { background: var(--surface); cursor: not-allowed; }
+.field-hint { font-size: 11px; color: var(--text-muted); margin-top: -2px; }
+
   .print-only { display: none; }
   .locked-grid { display: grid; grid-template-columns: 120px 1fr; gap: 10px; }
   .locked-grid input[type="password"] { text-align: center; }
+
   .tiny-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
   .tiny-error { font-size: 11px; margin-top: 8px; color: var(--danger); background: var(--danger-bg); border: 1px solid rgba(217,48,37,0.25); border-left: 3px solid var(--danger); border-radius: 10px; padding: 8px 10px; }
   .tiny-ok { font-size: 11px; margin-top: 8px; color: var(--green); background: var(--green-bg); border: 1px solid rgba(0,184,122,0.22); border-left: 3px solid var(--green); border-radius: 10px; padding: 8px 10px; }
+
   @media (max-width: 768px) { .locked-grid { grid-template-columns: 1fr; } }
+
   @media print {
     .no-print { display: none !important; }
     .print-only { display: block !important; }
@@ -235,13 +283,20 @@
 
 <header>
   <div class="logo-wrap">
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAB3CAYAAABboI4RAAA7NElEQVR42u2dd5xkVZXHv6eqZxiGHAQkiYAYUEEUwwpmUMzoCiZEREBMuLquYUXXgGlVzAERBXVVVEDEgAgqyyooiIKCSk6SMzPMTHfV2T/uudStN1XdVd3V1en3/Xzep2e6q1647777zu+ec88xd38lsDXQAIzpw4HFwFlm9it3NzNzhBBCCCGEEELMDO5+jg+XT8Vx62p9IYQQQgghhJg5RoBVJO+dM70ewgZQB0bV7EIIIYQQQggxOwShFUJwOgWhVY4lhBBCCCGEEGIGqakJhBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhBAShEIIIYQQQgghJAiFEEIIIYQQQkgQCiGEEEIIIYSQIBRCCCGEEEIIIUEohBBCCCGEEEKCUAghhBBCCCGEBKEQQgghhBBCCAlCIYQQQgghhAiBb+MAAAAASUVORK5CYII=" class="logo-svg" alt="LUNA Grupo Inmobiliario"/>
+    <!-- Los logos se cargan desde los archivos del repo (favicon, apple-touch-icon, etc.) -->
+    <!-- Si tienes los logos en base64 en tu index.html actual de GitHub, cópialos aquí -->
+    <img src="android-chrome-512x512.png" class="logo-svg" alt="LUNA Grupo Inmobiliario"
+         onerror="this.src=''; this.style.display='none'; document.getElementById('logoFallback').style.display='block';" />
     <span class="logo-fallback" id="logoFallback">LUNA Grupo Inmobiliario</span>
   </div>
+
   <div class="header-center-logo" aria-label="Marca LUNA">
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACAAAAAHWCAYAAADjWGnRAAAQAElEQVR4AeydB5gkVdWGd3t2dhdYcgYFQRQElSgYyCooAqKgJAkiSkYEBVRAyaASVBAlSM4gBpSkgAExAQqCICpBCZLzhpnhf7/9GVyWSd1d1dPh3ed8e6urq869960e7770v2ME4BTuLQMCBuB4BsX0z4W/uEsdlKA3EQAAJAAAAA==" alt="LUNA" />
+    <img src="android-chrome-192x192.png" alt="LUNA" />
   </div>
-  <div class="header-right"></div>
+
+  <div class="header-right">
+    <img class="logo-right" src="apple-touch-icon.png" alt="LUNA Grupo Inmobiliario" />
+  </div>
 </header>
 
 <div id="inAppBanner" class="inapp-banner" style="display:none;">
@@ -262,40 +317,41 @@
           <label>Nombre del Inversionista</label>
           <input type="text" id="nombreInversionista" placeholder="Ej. María González López">
         </div>
-        <div class="field">
-          <label>Nombre del Proyecto</label>
-          <select id="nombreProyecto" class="no-print" onchange="toggleProyectoOtro();">
-            <option value="">Selecciona un proyecto…</option>
-            <option value="Altamar III">Altamar III</option>
-            <option value="Alura">Alura</option>
-            <option value="Amp. Fortaleza">Amp. Fortaleza</option>
-            <option value="Amp. Puesta del Sol">Amp. Puesta del Sol</option>
-            <option value="Binniza">Binniza</option>
-            <option value="El Samaritan">El Samaritan</option>
-            <option value="Guidxilayu">Guidxilayu</option>
-            <option value="Kailani">Kailani</option>
-            <option value="Luna">Luna</option>
-            <option value="Majahua">Majahua</option>
-            <option value="Olaia">Olaia</option>
-            <option value="Samara">Samara</option>
-            <option value="Vilu Campestre">Vilu Campestre</option>
-            <option value="Fraccionamiento Zoi">Fraccionamiento Zoi</option>
-            <option value="Fraccionamiento Nexus">Fraccionamiento Nexus</option>
-            <option value="Fraccionamiento Interoceanico">Fraccionamiento Interoceanico</option>
-            <option value="Fraccionamiento Guayacán">Fraccionamiento Guayacán</option>
-            <option value="__otro__">Otro (escribir)…</option>
-          </select>
-          <input type="text" id="nombreProyectoPrint" class="print-only" readonly placeholder="—">
-          <div id="proyectoOtroWrap" class="locked-other" style="display:none; margin-top:8px;">
-            <div class="locked-grid">
-              <input type="password" id="proyectoCode" inputmode="numeric" pattern="\d*" maxlength="6" autocomplete="off" placeholder="Código" oninput="checkProyectoCode();">
-              <input type="text" id="nombreProyectoOtro" placeholder="Escribe el nombre del proyecto" disabled autocomplete="off" oninput="syncProyectoPrint(); calcular();">
-            </div>
-            <div class="tiny-hint" id="proyectoCodeHint">Código requerido para habilitar "Otro".</div>
-            <div class="tiny-error" id="proyectoCodeErr" style="display:none;">Código incorrecto.</div>
-            <div class="tiny-ok" id="proyectoCodeOk" style="display:none;">Código verificado. Ya puedes escribir.</div>
+              <div class="field">
+        <label>Nombre del Proyecto</label>
+        <select id="nombreProyecto" class="no-print" onchange="toggleProyectoOtro();">
+          <option value="">Selecciona un proyecto…</option>
+          <option value="Altamar III">Altamar III</option>
+          <option value="Alura">Alura</option>
+          <option value="Amp. Fortaleza">Amp. Fortaleza</option>
+          <option value="Amp. Puesta del Sol">Amp. Puesta del Sol</option>
+          <option value="Binniza">Binniza</option>
+          <option value="El Samaritan">El Samaritan</option>
+          <option value="Guidxilayu">Guidxilayu</option>
+          <option value="Kailani">Kailani</option>
+          <option value="Luna">Luna</option>
+          <option value="Majahua">Majahua</option>
+          <option value="Olaia">Olaia</option>
+          <option value="Samara">Samara</option>
+          <option value="Vilu Campestre">Vilu Campestre</option>
+          <option value="Fraccionamiento Zoi">Fraccionamiento Zoi</option>
+          <option value="Fraccionamiento Nexus">Fraccionamiento Nexus</option>
+          <option value="Fraccionamiento Interoceanico">Fraccionamiento Interoceanico</option>
+          <option value="Fraccionamiento Guayacán">Fraccionamiento Guayacán</option>
+          <option value="__otro__">Otro (escribir)…</option>
+        </select>
+        <input type="text" id="nombreProyectoPrint" class="print-only" readonly placeholder="—">
+        <div id="proyectoOtroWrap" class="locked-other" style="display:none; margin-top:8px;">
+          <div class="locked-grid">
+            <input type="password" id="proyectoCode" inputmode="numeric" pattern="\d*" maxlength="6" autocomplete="off" placeholder="Código" oninput="checkProyectoCode();">
+            <input type="text" id="nombreProyectoOtro" placeholder="Escribe el nombre del proyecto" disabled autocomplete="off"
+              oninput="syncProyectoPrint(); calcular();">
           </div>
+          <div class="tiny-hint" id="proyectoCodeHint">Código requerido para habilitar "Otro".</div>
+          <div class="tiny-error" id="proyectoCodeErr" style="display:none;">Código incorrecto.</div>
+          <div class="tiny-ok" id="proyectoCodeOk" style="display:none;">Código verificado. Ya puedes escribir.</div>
         </div>
+      </div>
       </div>
       <div class="field">
         <label>Nombre del Asesor</label>
@@ -316,7 +372,8 @@
         <div id="asesorOtroWrap" class="locked-other" style="display:none; margin-top:8px;">
           <div class="locked-grid">
             <input type="password" id="asesorCode" inputmode="numeric" pattern="\d*" maxlength="4" autocomplete="off" placeholder="Código" oninput="checkAsesorCode();">
-            <input type="text" id="nombreAsesor" placeholder="Escribe el nombre del asesor" disabled autocomplete="off" oninput="syncAsesorPrint();">
+            <input type="text" id="nombreAsesor" placeholder="Escribe el nombre del asesor" disabled autocomplete="off"
+              oninput="syncAsesorPrint();">
           </div>
           <div class="tiny-hint" id="asesorCodeHint">Código requerido para habilitar "Otro".</div>
           <div class="tiny-error" id="asesorCodeErr" style="display:none;">Código incorrecto.</div>
@@ -372,7 +429,7 @@
         </select>
       </div>
       <div class="field" id="fxField" style="display:none;">
-        <label>Tipo de cambio USD→MXN</label>
+        <label>Tipo de cambio USD→MXN (Google)</label>
         <div class="fx-row">
           <input type="number" id="tipoCambio" min="0" step="0.0001" value="" placeholder="Ej. 17.2500" oninput="calcular()" onchange="calcular()">
           <button type="button" class="btn btn-outline btn-mini" onclick="actualizarTipoCambio(true)">Actualizar</button>
@@ -382,10 +439,11 @@
           <span class="fx-status" id="tcStatus"></span>
         </div>
       </div>
+
       <div class="field">
         <label>Precio de la Propiedad</label>
         <input type="text" id="precio" value="0" inputmode="decimal" autocomplete="off" onfocus="unformatMoney('precio')" onblur="formatMoney('precio'); calcular()" oninput="calcular()" onchange="calcular()">
-        <div class="check-inline">
+          <div class="check-inline">
           <input type="checkbox" id="precioManual" onchange="calcular()">
           <span>Editar precio manualmente</span>
         </div>
@@ -420,7 +478,9 @@
         <input type="number" id="tasaComision" value="0" min="0" max="10" step="0.5" oninput="calcular()" onchange="calcular()">
       </div>
     </div>
+
     <div class="divider"></div>
+
     <div class="grid-3">
       <div class="field">
         <label>Fecha de Reserva</label>
@@ -435,7 +495,9 @@
         <input type="date" id="fechaPrimerPago" oninput="calcular()" onchange="calcular()">
       </div>
     </div>
+
     <div class="divider"></div>
+
     <div class="grid-3">
       <div class="field">
         <label>Enganche Calculado</label>
@@ -496,7 +558,7 @@
       </table>
     </div>
     <div class="info-note">
-      💡 Los campos sombreados son calculados automáticamente. Solo edite los campos de entrada.
+      💡 Los campos sombreados son calculados automáticamente. Solo edite los campos de entrada. Los pagos de <strong>Reserva</strong> y <strong>Enganche</strong> no generan intereses.
     </div>
     <div class="btn-row">
       <button class="btn btn-outline" onclick="limpiar()">Limpiar Formulario</button>
@@ -505,19 +567,70 @@
   </div>
 
   <footer class="footer-legal print-keep" id="footerLegal">
-    <div class="legal-card">
-      <div class="legal-title">Privacidad, confidencialidad y vigencia</div>
-      <div class="legal-body">
-        <p><strong>Privacidad y confidencialidad:</strong> Esta cotización contiene información confidencial. Su uso es exclusivamente para el destinatario y para fines de evaluación comercial. Queda prohibida su reproducción, distribución o divulgación sin autorización por escrito de LUNA Grupo Inmobiliario.</p>
-        <p><strong>Vigencia:</strong> Esta cotización tiene vigencia de <strong>5 días naturales</strong> a partir de la fecha de emisión/impresión. Después de ese plazo, precios y condiciones pueden cambiar sin previo aviso.</p>
-        <p><strong>Apartado:</strong> El pago de <strong>apartado no es reembolsable</strong>. En caso de desistimiento, el apartado se aplicará a gastos administrativos y de oportunidad comercial.</p>
-        <p><strong>Equivalencias en USD:</strong> Los importes mostrados en USD son únicamente referenciales. El precio final se pacta y paga en MXN; cualquier conversión se realizará al momento del pago/cierre conforme al tipo de cambio FIX publicado por el Banco de México. Las variaciones del tipo de cambio no son imputables a LUNA Grupo Inmobiliario.</p>
-      </div>
-    </div>
+    <div class="legal-card"><div class="legal-title">Privacidad, confidencialidad y vigencia</div>
+    <div class="legal-body">
+      <p><strong>Privacidad y confidencialidad:</strong> Esta cotización contiene información confidencial. Su uso es exclusivamente para el destinatario y para fines de evaluación comercial. Queda prohibida su reproducción, distribución o divulgación sin autorización por escrito de LUNA Grupo Inmobiliario.</p>
+      <p><strong>Vigencia:</strong> Esta cotización tiene vigencia de <strong>5 días naturales</strong> a partir de la fecha de emisión/impresión. Después de ese plazo, precios y condiciones pueden cambiar sin previo aviso.</p>
+      <p><strong>Apartado:</strong> El pago de <strong>apartado no es reembolsable</strong>. En caso de desistimiento, el apartado se aplicará a gastos administrativos y de oportunidad comercial.</p>
+      <p><strong>Equivalencias en USD:</strong> Los importes mostrados en USD son únicamente referenciales. El precio final se pacta y paga en MXN; cualquier conversión se realizará al momento del pago/cierre conforme al tipo de cambio FIX publicado por el Banco de México (o el último publicado en día inhábil). Las variaciones del tipo de cambio no son imputables a LUNA Grupo Inmobiliario.</p>
+    </div></div>
   </footer>
+
 </main>
 
 <script>
+  // ── BITÁCORA LUNA GI ────────────────────────────────────────────────
+  const _FB_CONFIG = {
+    apiKey: "AIzaSyCJhR10bVifVG50RJ20GPDxkPEw6RpJqCM",
+    authDomain: "formulario-operativo-luna-gi.firebaseapp.com",
+    projectId: "formulario-operativo-luna-gi",
+    storageBucket: "formulario-operativo-luna-gi.firebasestorage.app",
+    messagingSenderId: "833936480389",
+    appId: "1:833936480389:web:29ca5d4e04da4b30d8f1ec"
+  };
+  let _db = null;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
+    _db = firebase.firestore();
+  } catch(e){ console.warn('Firebase no disponible:', e); }
+
+  let _userIP = '—';
+  (async function fetchIP(){
+    try {
+      const r = await fetch('https://api.ipify.org?format=json');
+      const d = await r.json();
+      _userIP = d.ip || '—';
+    } catch(e){ _userIP = '—'; }
+  })();
+
+  async function bitLog(formulario, nombre, accion) {
+    if (!_db) return;
+    try {
+      const ua = navigator.userAgent;
+      const dispositivo = /iPhone|iPad/.test(ua) ? 'iOS'
+                        : /Android/.test(ua)      ? 'Android'
+                        : /Mac/.test(ua)           ? 'Mac'
+                        : /Win/.test(ua)           ? 'PC Windows'
+                        : 'Otro';
+      await _db.collection('bitacora').add({
+        formulario,
+        nombre:     nombre  || '—',
+        accion:     accion  || 'Acción',
+        fecha:      new Date().toISOString(),
+        ts:         firebase.firestore.FieldValue.serverTimestamp(),
+        ip:         _userIP,
+        dispositivo,
+        ua:         ua.substring(0, 120)
+      });
+    } catch(e){ console.warn('bitLog error:', e); }
+  }
+
+  // Registro al abrir la página
+  window.addEventListener('load', function(){
+    bitLog('Cotizador', '—', 'Abrir cotizador');
+  });
+  // ────────────────────────────────────────────────────────────────────
+
   let moneda = 'MXN';
   const formatters = {
     MXN: new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }),
@@ -571,6 +684,8 @@
     setTxt('s-precio', '—'); setTxt('s-mensual', '—'); setTxt('s-total', '—'); setTxt('s-enganche', '—');
     const tbody = document.getElementById('tbodyAmort');
     if (tbody) tbody.innerHTML = '';
+    const alertBox = document.getElementById('alertInconsistencia');
+    if (alertBox) { alertBox.style.display = 'none'; alertBox.textContent = ''; }
   }
 
   function setMoneda(code) {
@@ -582,7 +697,10 @@
     calcular();
   }
 
-  function setTCStatus(msg) { const s = document.getElementById('tcStatus'); if (s) s.textContent = msg ? `· ${msg}` : ''; }
+  function setTCStatus(msg) {
+    const s = document.getElementById('tcStatus');
+    if (s) s.textContent = msg ? `· ${msg}` : '';
+  }
 
   function cacheFX(rate, source) {
     try { localStorage.setItem('luna_fx_usdmxn', JSON.stringify({ rate: Number(rate), source: String(source || ''), ts: Date.now() })); } catch (_) {}
@@ -594,7 +712,8 @@
       if (!raw) return null;
       const j = JSON.parse(raw);
       if (!j || !isFinite(j.rate) || j.rate <= 0 || !j.ts) return null;
-      if ((Date.now() - Number(j.ts)) / 36e5 > maxAgeHours) return null;
+      const ageH = (Date.now() - Number(j.ts)) / 36e5;
+      if (ageH > maxAgeHours) return null;
       return j;
     } catch (_) { return null; }
   }
@@ -622,7 +741,8 @@
   async function actualizarTipoCambio(force = false) {
     if (moneda !== 'USD') return;
     const now = new Date();
-    const stamp = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    const stamp = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+                  now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
     const el = document.getElementById('tipoCambio');
     const existing = getNum('tipoCambio');
     if (!force && existing && existing > 0) { setTCStatus('Usando el valor capturado'); calcular(); return; }
@@ -634,9 +754,9 @@
       let m = t.match(/YMlKec\s+fxKbKc[^>]*>([0-9.,]+)/);
       if (!m) m = t.match(/data-last-price="([0-9.]+)"/);
       if (!m) m = t.match(/\bUSD\s*[-/ ]\s*MXN\b[\s\S]{0,500}?([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?)/i);
-      if (!m) throw new Error('No encontrado');
+      if (!m) throw new Error('No se encontró el tipo de cambio.');
       const rate = parseFloat(String(m[1]).replace(/,/g, ''));
-      if (!isFinite(rate) || rate <= 0) throw new Error('Inválido');
+      if (!isFinite(rate) || rate <= 0) throw new Error('Tipo de cambio inválido.');
       if (el) el.value = rate.toFixed(4);
       cacheFX(rate, 'google');
       setTCStatus(`Fuente: Google Finance · ${stamp}`);
@@ -648,15 +768,19 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const j = await res.json();
       const rate = j && j.rates && j.rates.MXN ? Number(j.rates.MXN) : 0;
-      if (!isFinite(rate) || rate <= 0) throw new Error('Inválido');
+      if (!isFinite(rate) || rate <= 0) throw new Error('Tipo de cambio inválido.');
       if (el) el.value = rate.toFixed(4);
       cacheFX(rate, 'api');
-      setTCStatus(`Fuente: tasa interbancaria · ${stamp}`);
-      calcular();
+      setTCStatus(`Fuente: tasa interbancaria (API) · ${stamp}`);
+      calcular(); return;
     } catch (e2) {
+      console.warn('FX fallback no disponible:', e2);
       const cached = readCachedFX(96);
-      if (cached && el) { el.value = Number(cached.rate).toFixed(4); setTCStatus(`Usando último guardado · ${fmtStamp(cached.ts)}`); calcular(); }
-      else { setTCStatus('No disponible (ingrésalo manual)'); }
+      if (cached && el) {
+        el.value = Number(cached.rate).toFixed(4);
+        setTCStatus(`Usando último guardado (${cached.source || 'cache'}) · ${fmtStamp(cached.ts)}`);
+        calcular();
+      } else { setTCStatus('No disponible (ingrésalo manual)'); }
     }
   }
 
@@ -808,9 +932,10 @@
   }
 
   function getProyectoValue() {
-    syncProyectoPrint();
-    const printEl = document.getElementById('nombreProyectoPrint');
-    return printEl ? printEl.value.trim() : '';
+    const sel = document.getElementById('nombreProyecto');
+    if (!sel) return '';
+    const val = syncProyectoPrint();
+    return val.trim();
   }
 
   function initFechas() {
@@ -859,7 +984,6 @@
     const precioLote = (precioM2 > 0 && m2Lote > 0) ? (precioM2 * m2Lote) : null;
     const precioLoteEl = document.getElementById('precioLoteCalc');
     if (precioLoteEl) precioLoteEl.textContent = precioLote ? fmt(precioLote) : '—';
-
     const precioEl = document.getElementById('precio');
     const manualOverride = !!(document.getElementById('precioManual') && document.getElementById('precioManual').checked);
     if (precioEl) {
@@ -870,11 +994,15 @@
         precioEl.readOnly = true;
       } else { precioEl.readOnly = false; }
     }
-
     const precio = Math.max(0, getNum('precio'));
     const plazoStr = String(get('plazo') ?? '').trim();
-    if (precio <= 0 || !plazoStr) { clearOutputs(); formatMoneyIfNotFocused('precioM2'); formatMoneyIfNotFocused('precio'); formatMoneyIfNotFocused('apartado'); return; }
-
+    if (precio <= 0 || !plazoStr) {
+      clearOutputs();
+      formatMoneyIfNotFocused('precioM2');
+      formatMoneyIfNotFocused('precio');
+      formatMoneyIfNotFocused('apartado');
+      return;
+    }
     const apartadoRaw = Math.max(0, getNum('apartado'));
     const apartado = Math.min(apartadoRaw, precio);
     const engancheMode = window._engancheMode || 'pct';
@@ -883,38 +1011,40 @@
     else { pctEnganche = precio > 0 ? Math.min(1, Math.max(0, getNum('enganchePesos') / precio)) : 0; }
     const tasaAnual = Math.max(0, getNum('tasaAnual') / 100);
     const plazo = Math.max(1, Math.round(getNum('plazo')));
-    if (precio <= 0 || plazo <= 0) { document.getElementById('s-precio').textContent = fmt(precio); document.getElementById('s-mensual').textContent = fmt(0); document.getElementById('s-total').textContent = fmt(0); document.getElementById('s-enganche').textContent = fmt(0); document.getElementById('tbodyAmort').innerHTML = ''; return; }
-
+    if (precio <= 0 || plazo <= 0) {
+      document.getElementById('s-precio').textContent = fmt(precio);
+      document.getElementById('s-mensual').textContent = fmt(0);
+      document.getElementById('s-total').textContent = fmt(0);
+      document.getElementById('s-enganche').textContent = fmt(0);
+      const tbody = document.getElementById('tbodyAmort');
+      if (tbody) tbody.innerHTML = '';
+      return;
+    }
     const pctComision = Math.max(0, getNum('tasaComision') / 100);
     const enganche = precio * pctEnganche;
     const saldoBase = Math.max(0, precio - apartado - enganche);
     const comision = saldoBase * pctComision;
     const montoFinanciar = saldoBase + comision;
-
     document.getElementById('engancheCalc').textContent = fmt(enganche);
     document.getElementById('comisionCalc').textContent = fmt(comision);
     document.getElementById('montoFinanciarCalc').textContent = fmt(montoFinanciar);
-
     const tasaMensual = tasaAnual / 12;
-    const pagoMensual = (tasaMensual === 0) ? (montoFinanciar / plazo) : (montoFinanciar * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -plazo));
-
+    const pagoMensual = (tasaMensual === 0)
+      ? (montoFinanciar / plazo)
+      : (montoFinanciar * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -plazo));
     document.getElementById('s-precio').textContent = fmt(precio);
     document.getElementById('s-mensual').textContent = fmt(pagoMensual);
-
     const tbody = document.getElementById('tbodyAmort');
     tbody.innerHTML = '';
     let totalPagos = 0;
-
     const balInit = precio + comision;
     const balFin = Math.max(0, balInit - apartado);
     totalPagos += apartado;
     tbody.appendChild(buildRow('Reserva', fmtDate(get('fechaReserva')), balInit, apartado, '—', apartado, balFin, true));
-
     const balInit2 = balFin;
     const balFin2 = Math.max(0, balInit2 - enganche);
     totalPagos += enganche;
     tbody.appendChild(buildRow('Enganche', fmtDate(get('fechaEnganche')), balInit2, enganche, '—', enganche, balFin2, true));
-
     let balance = montoFinanciar;
     for (let i = 1; i <= plazo; i++) {
       const fecha = addMonths(get('fechaPrimerPago'), i - 1);
@@ -925,10 +1055,8 @@
       totalPagos += pago;
       tbody.appendChild(buildRow(i, fecha, balance + capital, pago, interes, capital, balance, false));
     }
-
     document.getElementById('s-total').textContent = fmt(totalPagos);
     document.getElementById('s-enganche').textContent = fmt(apartado + enganche);
-
     const mxnEq = document.getElementById('mxnEq');
     if (mxnEq) {
       if (moneda === 'USD') {
@@ -941,18 +1069,14 @@
           setText('mxnPrecio', fmtMXN(precio * tc));
           setText('mxnMensual', fmtMXN(pagoMensual * tc));
           setText('mxnTotal', fmtMXN(totalPagos * tc));
-        } else {
-          setText('mxnPrecio', '—'); setText('mxnMensual', '—'); setText('mxnTotal', '—');
-        }
+        } else { setText('mxnPrecio', '—'); setText('mxnMensual', '—'); setText('mxnTotal', '—'); }
       } else { mxnEq.style.display = 'none'; }
     }
-
     const alertBox = document.getElementById('alertInconsistencia');
     if ((apartado + enganche) > (precio + 0.01)) {
       alertBox.style.display = 'block';
-      alertBox.innerHTML = `⚠️ <strong>Inconsistencia:</strong> Enganche + Apartado supera el precio.`;
+      alertBox.innerHTML = `⚠️ <strong>Inconsistencia:</strong> Enganche + Apartado supera el precio. Ajusta el % de enganche o el apartado para evitar resultados engañosos.`;
     } else { alertBox.style.display = 'none'; alertBox.textContent = ''; }
-
     formatMoneyIfNotFocused('precioM2');
     formatMoneyIfNotFocused('precio');
     formatMoneyIfNotFocused('apartado');
@@ -968,15 +1092,21 @@
 
   function limpiar() {
     const set = (id, v='') => { const el=document.getElementById(id); if(el) el.value=v; };
+    const setSel = (id, v='') => { const el=document.getElementById(id); if(el) el.value=v; };
     set('nombreInversionista','');
-    document.getElementById('nombreProyecto').value='';
-    document.getElementById('nombreAsesorSel').value='';
+    setSel('nombreProyecto',''); setSel('nombreAsesorSel','');
     set('proyectoCode',''); set('nombreProyectoOtro','');
     const pOtro = document.getElementById('nombreProyectoOtro'); if(pOtro) pOtro.disabled = true;
     const pWrap = document.getElementById('proyectoOtroWrap'); if(pWrap) pWrap.style.display = 'none';
+    const pErr = document.getElementById('proyectoCodeErr'); if(pErr) pErr.style.display='none';
+    const pOk  = document.getElementById('proyectoCodeOk');  if(pOk) pOk.style.display='none';
+    setProyectoHint(false);
     set('asesorCode',''); set('nombreAsesor','');
     const aOtro = document.getElementById('nombreAsesor'); if(aOtro) aOtro.disabled = true;
     const aWrap = document.getElementById('asesorOtroWrap'); if(aWrap) aWrap.style.display = 'none';
+    const aErr = document.getElementById('asesorCodeErr'); if(aErr) aErr.style.display='none';
+    const aOk  = document.getElementById('asesorCodeOk');  if(aOk) aOk.style.display='none';
+    setAsesorHint(false);
     syncProyectoPrint(); syncAsesorPrint();
     set('precioM2','0'); set('m2Lote','0'); set('manzana',''); set('lote','');
     const plc = document.getElementById('precioLoteCalc'); if(plc) plc.textContent = '—';
@@ -984,7 +1114,7 @@
     setEngancheMode('pct');
     set('tasaAnual','0'); set('plazo','0'); set('tasaComision','0');
     const chk = document.getElementById('precioManual'); if(chk) chk.checked = false;
-    const precioEl = document.getElementById('precio'); if(precioEl) precioEl.readOnly = false;
+    const precioEl = document.getElementById('precio'); if(precioEl) precioEl.readOnly = true;
     set('fechaReserva',''); set('fechaEnganche',''); set('fechaPrimerPago','');
     set('tipoCambio','');
     formatMoney('precioM2'); formatMoney('precio'); formatMoney('apartado');
@@ -993,23 +1123,34 @@
 
   function imprimirPDF() {
     if (isInAppBrowser()) {
-      alert('Para imprimir/guardar PDF, abre este link en Safari/Chrome (opción "Abrir en navegador").');
+      alert('Para imprimir/guardar PDF, abre este link en Safari/Chrome (opción "Abrir en navegador"). Los navegadores dentro de apps suelen bloquear la impresión.');
       return;
     }
+
+    // Registro en bitácora
+    const inv = (document.getElementById('nombreInversionista')?.value || '').trim();
+    const proj = getProyectoValue() || '—';
+    const asesor = syncAsesorPrint() || '—';
+    const nombre = [inv, asesor].filter(Boolean).join(' / ') || '—';
+    bitLog('Cotizador', nombre, 'Imprimir / Guardar PDF — Proyecto: ' + proj);
+
     const oldTitle = document.title;
     document.title = ' ';
     try {
-      if (typeof window.print !== 'function') throw new Error('no_print');
+      if (typeof window.print !== 'function') throw new Error('print_not_supported');
       window.print();
     } catch (e) {
-      alert('La función de impresión no está disponible. Abre en Chrome/Edge y usa Imprimir/Guardar PDF.');
-    } finally {
-      document.title = oldTitle;
-    }
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIOS) alert('Para guardar en PDF en iPhone/iPad: abre en Safari → Compartir → Imprimir → pellizca para PDF.');
+      else alert('La función de impresión no está disponible. Abre en Chrome/Edge y usa Imprimir/Guardar PDF.');
+    } finally { document.title = oldTitle; }
   }
 
   // Aviso in-app
-  (function(){ const b = document.getElementById('inAppBanner'); if (b && isInAppBrowser()) b.style.display = 'block'; })();
+  (function(){
+    const b = document.getElementById('inAppBanner');
+    if (b && isInAppBrowser()) b.style.display = 'block';
+  })();
 
   // init
   initFechas();
@@ -1025,116 +1166,11 @@
   window.addEventListener('afterprint', () => { document.title = _printTitle; });
 
   window.addEventListener('DOMContentLoaded', () => {
-    try { if (typeof toggleProyectoOtro === 'function') toggleProyectoOtro(); } catch (e) {}
-    try { if (typeof toggleAsesorOtro === 'function') toggleAsesorOtro(); } catch (e) {}
-  });
-
-  // ══════════════════════════════════════════════════════════════════
-  // BITÁCORA LUNA GI — Registro en Firebase Firestore
-  // ══════════════════════════════════════════════════════════════════
-  const _FB_CONFIG = {
-    apiKey: "AIzaSyCJhR10bVifVG50RJ20GPDxkPEw6RpJqCM",
-    authDomain: "formulario-operativo-luna-gi.firebaseapp.com",
-    projectId: "formulario-operativo-luna-gi",
-    storageBucket: "formulario-operativo-luna-gi.firebasestorage.app",
-    messagingSenderId: "833936480389",
-    appId: "1:833936480389:web:29ca5d4e04da4b30d8f1ec"
-  };
-  let _db = null;
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
-    _db = firebase.firestore();
-  } catch(e){ console.warn('Firebase no disponible:', e); }
-
-  // IP del usuario (se obtiene una sola vez al cargar)
-  let _userIP = '—';
-  (async function fetchIP(){
     try {
-      const r = await fetch('https://api.ipify.org?format=json');
-      const d = await r.json();
-      _userIP = d.ip || '—';
-    } catch(e){ _userIP = '—'; }
-  })();
-
-  // Función central de registro
-  async function bitLog(formulario, nombre, accion){
-    if(!_db) return;
-    try {
-      const ua = navigator.userAgent;
-      const dispositivo = /iPhone|iPad/.test(ua) ? 'iOS'
-                        : /Android/.test(ua)      ? 'Android'
-                        : /Mac/.test(ua)           ? 'Mac'
-                        : /Win/.test(ua)           ? 'PC Windows'
-                        : 'Otro';
-      await _db.collection('bitacora').add({
-        formulario,
-        nombre:     nombre  || '—',
-        accion:     accion  || 'Acción',
-        fecha:      new Date().toISOString(),
-        ts:         firebase.firestore.FieldValue.serverTimestamp(),
-        ip:         _userIP,
-        dispositivo,
-        ua:         ua.substring(0, 120)
-      });
-    } catch(e){ console.warn('bitLog error:', e); }
-  }
-
-  // ── Hooks de registro ─────────────────────────────────────────────
-
-  // 1. Apertura de la página
-  window.addEventListener('load', function(){
-    bitLog('Cotizador', '—', 'Abrir cotizador');
+      if (typeof toggleProyectoOtro === 'function') toggleProyectoOtro();
+      if (typeof toggleAsesorOtro === 'function') toggleAsesorOtro();
+    } catch (e) {}
   });
-
-  // 2. Selección de proyecto
-  (function(){
-    const el = document.getElementById('nombreProyecto');
-    if(el) el.addEventListener('change', function(){
-      const val = this.value === '__otro__' ? 'Otro' : (this.value || '—');
-      bitLog('Cotizador', '—', 'Seleccionar proyecto: ' + val);
-    });
-  })();
-
-  // 3. Selección de asesor
-  (function(){
-    const el = document.getElementById('nombreAsesorSel');
-    if(el) el.addEventListener('change', function(){
-      const val = this.value === '__otro__' ? 'Otro' : (this.value || '—');
-      bitLog('Cotizador', '—', 'Seleccionar asesor: ' + val);
-    });
-  })();
-
-  // 4. Calcular cotización (debounce 1.5s para no spam)
-  (function(){
-    const _calcOrig = calcular;
-    let _timer = null;
-    window.calcular = function(){
-      _calcOrig.apply(this, arguments);
-      clearTimeout(_timer);
-      _timer = setTimeout(function(){
-        const precio = parseMoney((document.getElementById('precio')||{}).value||'0');
-        if(precio > 0){
-          const inv = ((document.getElementById('nombreInversionista')||{}).value||'').trim() || '—';
-          const proj = getProyectoValue() || '—';
-          const asesor = syncAsesorPrint() || '—';
-          bitLog('Cotizador', inv + ' | ' + asesor, 'Calcular cotización: ' + proj);
-        }
-      }, 1500);
-    };
-  })();
-
-  // 5. Imprimir / Guardar PDF
-  (function(){
-    const _impOrig = imprimirPDF;
-    window.imprimirPDF = function(){
-      const inv = ((document.getElementById('nombreInversionista')||{}).value||'').trim() || '—';
-      const proj = getProyectoValue() || '—';
-      const asesor = syncAsesorPrint() || '—';
-      bitLog('Cotizador', inv + ' | ' + asesor, 'Imprimir / Guardar PDF: ' + proj);
-      _impOrig.apply(this, arguments);
-    };
-  })();
-
 </script>
 </body>
 </html>

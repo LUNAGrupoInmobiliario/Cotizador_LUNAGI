@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#134289">
-  <meta name="description" content="Cotizador de lotes inmobiliarios - LUNA Grupo Inmobiliario">
-  <title>LUNA – Cotizador</title>
+  <title>LUNA – Acceso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,17 +13,12 @@
       --blue: #134289;
       --blue-dark: #0f2a5e;
       --cyan: #00a3e0;
-      --green: #10b981;
       --red: #ef4444;
       --g50: #f9fafb;
       --g100: #f3f4f6;
       --g200: #e5e7eb;
-      --g300: #d1d5db;
-      --g500: #6b7280;
       --g600: #4b5563;
-      --g700: #374151;
       --g900: #111827;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     * {
@@ -37,31 +29,22 @@
 
     html, body {
       height: 100%;
-      width: 100%;
       font-family: 'Inter', sans-serif;
-      background: #fff;
-      color: var(--g900);
       -webkit-font-smoothing: antialiased;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
       background: linear-gradient(135deg, #0f2a5e 0%, var(--blue) 100%);
+      display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
       padding: 24px;
-      gap: 0;
     }
 
-    .menu-container {
+    .login-container {
       width: 100%;
-      max-width: 420px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
+      max-width: 360px;
       animation: slideUp 0.5s ease-out;
     }
 
@@ -76,218 +59,197 @@
       }
     }
 
-    .menu-header {
-      text-align: center;
-      color: #fff;
-    }
-
-    .menu-logo {
-      width: 100px;
-      height: 100px;
-      background: linear-gradient(135deg, var(--blue), var(--cyan));
-      border-radius: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 50px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      font-weight: 700;
-      font-family: 'Barlow Condensed', sans-serif;
-    }
-
-    .menu-header h1 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 32px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .menu-header p {
-      font-size: 14px;
-      opacity: 0.9;
-      letter-spacing: 0.3px;
-    }
-
-    .menu-options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .option-card {
+    .login-card {
       background: #fff;
-      border-radius: 16px;
-      padding: 20px 16px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      color: inherit;
-      border: 2px solid transparent;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-radius: 24px;
+      padding: 34px 26px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
     }
 
-    .option-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      border-color: var(--cyan);
-    }
-
-    .option-card:active {
-      transform: scale(0.98);
-    }
-
-    .option-icon {
-      width: 56px;
-      height: 56px;
+    .login-logo {
+      width: 84px;
+      height: 84px;
       background: linear-gradient(135deg, var(--blue), var(--cyan));
-      border-radius: 14px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(19, 66, 137, 0.2);
+      margin: 0 auto 18px;
+      font-size: 40px;
+      box-shadow: 0 4px 16px rgba(19, 66, 137, 0.35);
     }
 
-    .option-content {
-      flex: 1;
-    }
-
-    .option-content h3 {
+    .login-card h2 {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--blue);
       margin-bottom: 4px;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
 
-    .option-content p {
+    .login-card > p {
       font-size: 13px;
       color: var(--g600);
-      line-height: 1.4;
+      margin-bottom: 22px;
     }
 
-    .option-arrow {
-      color: var(--cyan);
-      font-size: 20px;
-      transition: transform 0.3s ease;
+    .login-field {
+      text-align: left;
+      margin-bottom: 12px;
+    }
+
+    .login-field label {
+      display: block;
+      font-size: 11px;
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--g600);
+      margin-bottom: 5px;
     }
 
-    .option-card:hover .option-arrow {
-      transform: translateX(4px);
+    .login-field input {
+      width: 100%;
+      border: 1.5px solid var(--g200);
+      border-radius: 10px;
+      padding: 13px 14px;
+      background: var(--g50);
+      outline: none;
+      min-height: 48px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      transition: all 0.2s ease;
     }
 
-    .menu-footer {
+    .login-field input:focus {
+      border-color: var(--cyan);
+      background: #fff;
+    }
+
+    #login-btn {
+      width: 100%;
+      margin-top: 8px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      min-height: 52px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    #login-btn:hover {
+      opacity: 0.9;
+    }
+
+    #login-btn:active {
+      transform: scale(0.98);
+    }
+
+    #login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #login-error {
+      font-size: 13px;
+      color: var(--red);
+      font-weight: 600;
+      min-height: 20px;
+      margin-top: 10px;
       text-align: center;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
-      letter-spacing: 0.5px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    @media (max-width: 480px) {
-      .menu-container {
-        max-width: 100%;
-      }
-
-      .menu-header h1 {
-        font-size: 28px;
-      }
-
-      .option-card {
-        padding: 16px 14px;
-      }
-
-      .option-icon {
-        width: 48px;
-        height: 48px;
-        font-size: 24px;
-      }
-
-      .option-content h3 {
-        font-size: 16px;
-      }
+    .login-footer {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 16px;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
-  <div class="menu-container">
-    <div class="menu-header">
-      <div class="menu-logo">💰</div>
-      <h1>LUNA Cotizador</h1>
-      <p>Herramientas de cotización inmobiliaria</p>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">💰</div>
+      <h2>LUNA Cotizador</h2>
+      <p>Inicia sesión con tu cuenta</p>
+
+      <form id="login-form" onsubmit="doLogin(event)">
+        <div class="login-field">
+          <label for="login-email">Usuario</label>
+          <input
+            type="text"
+            id="login-email"
+            autocomplete="off"
+            autocapitalize="characters"
+            placeholder="Ej. ORLANDO FALCONI"
+            required
+          >
+        </div>
+
+        <div class="login-field">
+          <label for="login-pass">Contraseña</label>
+          <input
+            type="password"
+            id="login-pass"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            required
+          >
+        </div>
+
+        <button type="submit" id="login-btn">Entrar</button>
+      </form>
+
+      <div id="login-error"></div>
     </div>
 
-    <div class="menu-options">
-      <!-- Opción 1: Cotizador de Lotes -->
-      <a href="./login.html" class="option-card">
-        <div class="option-icon">📊</div>
-        <div class="option-content">
-          <h3>Cotizador de Lotes</h3>
-          <p>Cotiza precios, financiamiento y tabla de amortización</p>
-        </div>
-        <div class="option-arrow">→</div>
-      </a>
-
-      <!-- Opción 2: Información -->
-      <div class="option-card" onclick="showInfo()">
-        <div class="option-icon">ℹ️</div>
-        <div class="option-content">
-          <h3>Información</h3>
-          <p>Términos, vigencia y preguntas frecuentes</p>
-        </div>
-        <div class="option-arrow">→</div>
-      </div>
-
-      <!-- Opción 3: Contacto -->
-      <div class="option-card" onclick="showContact()">
-        <div class="option-icon">📞</div>
-        <div class="option-content">
-          <h3>Contacto</h3>
-          <p>Comunícate con nuestro equipo de asesoramiento</p>
-        </div>
-        <div class="option-arrow">→</div>
-      </div>
-    </div>
-
-    <div class="menu-footer">
-      © 2026 LUNA Grupo Inmobiliario • Todos los derechos reservados
+    <div class="login-footer">
+      © 2026 LUNA Grupo Inmobiliario
     </div>
   </div>
 
   <script>
-    function showInfo() {
-      alert(`ℹ️ INFORMACIÓN
+    const VALID_USER = "ORLANDO FALCONI";
+    const VALID_PASS = "123456";
 
-Vigencia: 5 días naturales desde la emisión.
+    function doLogin(event) {
+      event.preventDefault();
 
-Confidencialidad: Esta cotización es confidencial y para uso exclusivo del destinatario.
+      const email = document.getElementById("login-email").value.toUpperCase().trim();
+      const pass = document.getElementById("login-pass").value;
+      const errorDiv = document.getElementById("login-error");
+      const btn = document.getElementById("login-btn");
 
-Precio: El pago se realiza en MXN. Los valores en USD son referenciales.
+      errorDiv.textContent = "";
+      btn.disabled = true;
 
-Apartado: No es reembolsable. Se aplica a gastos administrativos en caso de desistimiento.
-
-Para más detalles, consulta directamente con tu asesor.`);
+      if (email === VALID_USER && pass === VALID_PASS) {
+        sessionStorage.setItem("luna_auth", "true");
+        sessionStorage.setItem("luna_user", VALID_USER);
+        window.location.href = "./cotizador.html";
+      } else {
+        errorDiv.textContent = "Usuario o contraseña incorrectos";
+        btn.disabled = false;
+        document.getElementById("login-pass").value = "";
+      }
     }
 
-    function showContact() {
-      alert(`📞 CONTACTO
-
-Para cotizaciones, consultas o más información, contacta a nuestro equipo:
-
-Email: ventas@lunagi.com
-Teléfono: +52 (xxx) xxx-xxxx
-
-¡Estamos disponibles para ayudarte!`);
-    }
+    // Prevenir acceso directo a cotizador sin login
+    window.addEventListener("beforeunload", () => {
+      if (!sessionStorage.getItem("luna_auth")) {
+        // Bloqueado en cotizador.html
+      }
+    });
   </script>
 </body>
 </html>

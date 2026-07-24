@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#134289">
+  <title>LUNA – Acceso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue: #134289;
+      --blue-dark: #0f2a5e;
+      --cyan: #00a3e0;
+      --red: #ef4444;
+      --g50: #f9fafb;
+      --g100: #f3f4f6;
+      --g200: #e5e7eb;
+      --g600: #4b5563;
+      --g900: #111827;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f2a5e 0%, var(--blue) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 360px;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 34px 26px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .login-logo {
+      width: 84px;
+      height: 84px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      font-size: 40px;
+      box-shadow: 0 4px 16px rgba(19, 66, 137, 0.35);
+    }
+
+    .login-card h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .login-card > p {
+      font-size: 13px;
+      color: var(--g600);
+      margin-bottom: 22px;
+    }
+
+    .login-field {
+      text-align: left;
+      margin-bottom: 12px;
+    }
+
+    .login-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--g600);
+      margin-bottom: 5px;
+    }
+
+    .login-field input {
+      width: 100%;
+      border: 1.5px solid var(--g200);
+      border-radius: 10px;
+      padding: 13px 14px;
+      background: var(--g50);
+      outline: none;
+      min-height: 48px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .login-field input:focus {
+      border-color: var(--cyan);
+      background: #fff;
+    }
+
+    #login-btn {
+      width: 100%;
+      margin-top: 8px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      min-height: 52px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    #login-btn:hover {
+      opacity: 0.9;
+    }
+
+    #login-btn:active {
+      transform: scale(0.98);
+    }
+
+    #login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #login-error {
+      font-size: 13px;
+      color: var(--red);
+      font-weight: 600;
+      min-height: 20px;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .login-footer {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 16px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">💰</div>
+      <h2>LUNA Cotizador</h2>
+      <p>Inicia sesión con tu cuenta</p>
+
+      <form id="login-form" onsubmit="doLogin(event)">
+        <div class="login-field">
+          <label for="login-email">Usuario</label>
+          <input
+            type="text"
+            id="login-email"
+            autocomplete="off"
+            autocapitalize="characters"
+            placeholder="Ej. ORLANDO FALCONI"
+            required
+          >
+        </div>
+
+        <div class="login-field">
+          <label for="login-pass">Contraseña</label>
+          <input
+            type="password"
+            id="login-pass"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            required
+          >
+        </div>
+
+        <button type="submit" id="login-btn">Entrar</button>
+      </form>
+
+      <div id="login-error"></div>
+    </div>
+
+    <div class="login-footer">
+      © 2026 LUNA Grupo Inmobiliario
+    </div>
+  </div>
+
+  <script>
+    const VALID_USER = "ORLANDO FALCONI";
+    const VALID_PASS = "123456";
+
+    function doLogin(event) {
+      event.preventDefault();
+
+      const email = document.getElementById("login-email").value.toUpperCase().trim();
+      const pass = document.getElementById("login-pass").value;
+      const errorDiv = document.getElementById("login-error");
+      const btn = document.getElementById("login-btn");
+
+      errorDiv.textContent = "";
+      btn.disabled = true;
+
+      if (email === VALID_USER && pass === VALID_PASS) {
+        sessionStorage.setItem("luna_auth", "true");
+        sessionStorage.setItem("luna_user", VALID_USER);
+        window.location.href = "./cotizador.html";
+      } else {
+        errorDiv.textContent = "Usuario o contraseña incorrectos";
+        btn.disabled = false;
+        document.getElementById("login-pass").value = "";
+      }
+    }
+
+    // Prevenir acceso directo a cotizador sin login
+    window.addEventListener("beforeunload", () => {
+      if (!sessionStorage.getItem("luna_auth")) {
+        // Bloqueado en cotizador.html
+      }
+    });
+  </script>
+</body>
+</html>

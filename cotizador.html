@@ -304,6 +304,11 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
     .locked-other { display: none !important; }
   }
 </style>
+<script>
+  if (!sessionStorage.getItem("luna_auth")) {
+    window.location.href = "./login.html";
+  }
+</script>
 </head>
 <body>
 

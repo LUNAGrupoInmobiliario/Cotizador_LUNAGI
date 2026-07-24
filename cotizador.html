@@ -54,7 +54,7 @@
   }
   .logo-wrap { display: flex; align-items: center; gap: 12px; justify-self: start; }
   .header-center-logo { justify-self: center; display: flex; align-items: center; }
-  .header-right { justify-self: end; display: flex; align-items: center; justify-content: flex-end; }
+  .header-right { justify-self: end; display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 
   .header-center-logo img { height: var(--mark-h); width: auto; opacity: 0.95; }
   @media (max-width: 768px) { .header-center-logo img { height: var(--mark-h-mobile); } }
@@ -303,7 +303,9 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
     .print-only { display: block !important; }
     .locked-other { display: none !important; }
   }
-  .header-logout{flex-shrink:0;background:none;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);font-size:15px;padding:6px 10px;border-radius:10px;cursor:pointer;min-height:38px;transition:all .2s}
+  .header-logout{flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.35);color:rgba(255,255,255,.95);font-size:16px;padding:8px 12px;border-radius:8px;cursor:pointer;min-height:40px;transition:all .2s;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+  .header-logout:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.5);transform:scale(1.05)}
+  .header-logout:active{transform:scale(0.95)}
 </style>
 <script>
   if (!sessionStorage.getItem("luna_auth")) {

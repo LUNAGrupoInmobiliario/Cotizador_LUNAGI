@@ -941,16 +941,27 @@ function loginToEmail(v){
   v=v.trim().toLowerCase();
   return v.includes('@')?v:`${v}@${LOGIN_DOMAIN}`;
 }
+// Usuarios con acceso al cotizador. La clave `id` va en MAYÚSCULAS porque el
+// input se normaliza a mayúsculas antes de comparar (los correos no distinguen
+// mayúsculas); la contraseña sí distingue.
+// Al agregar un usuario aquí, agregarlo también en login.html.
+const USUARIOS_COTIZADOR = [
+  { id: "ORLANDO FALCONI",      pass: "123456",     nombre: "Orlando Falconi" },
+  { id: "LORZOYARI4@GMAIL.COM", pass: "yarilorzo4", nombre: "Yaritza Lorzo"   }
+];
+
 async function doLogin(ev){
   ev.preventDefault();
-  const email = document.getElementById("login-email").value.toUpperCase().trim();
+  const ingresado = document.getElementById("login-email").value.toUpperCase().trim();
   const pass = document.getElementById("login-pass").value;
   const btn = document.getElementById("login-btn");
   const err = document.getElementById("login-error");
   err.textContent = "";
   btn.disabled = true;
-  if (email === "ORLANDO FALCONI" && pass === "123456") {
+  const usuario = USUARIOS_COTIZADOR.find(u => u.id === ingresado && u.pass === pass);
+  if (usuario) {
     sessionStorage.setItem("luna_auth", "true");
+    sessionStorage.setItem("luna_user", usuario.nombre);
     window.location.href = "./cotizador.html";
   } else {
     err.textContent = "Usuario o contraseña incorrectos";

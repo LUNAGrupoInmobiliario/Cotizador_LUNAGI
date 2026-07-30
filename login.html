@@ -185,13 +185,15 @@
 
       <form id="login-form" onsubmit="doLogin(event)">
         <div class="login-field">
-          <label for="login-email">Usuario</label>
+          <label for="login-email">Usuario o correo</label>
           <input
             type="text"
             id="login-email"
-            autocomplete="off"
-            autocapitalize="characters"
-            placeholder="Ej. ORLANDO FALCONI"
+            autocomplete="username"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="Nombre o correo"
             required
           >
         </div>
@@ -219,13 +221,19 @@
   </div>
 
   <script>
-    const VALID_USER = "ORLANDO FALCONI";
-    const VALID_PASS = "123456";
+    // Usuarios con acceso al cotizador. La clave `id` va en MAYÚSCULAS porque el
+    // input se normaliza a mayúsculas antes de comparar (los correos no distinguen
+    // mayúsculas); la contraseña sí distingue.
+    // Al agregar un usuario aquí, agregarlo también en index.html.
+    const USUARIOS_COTIZADOR = [
+      { id: "ORLANDO FALCONI",      pass: "123456",     nombre: "Orlando Falconi" },
+      { id: "LORZOYARI4@GMAIL.COM", pass: "yarilorzo4", nombre: "Yaritza Lorzo"   }
+    ];
 
     function doLogin(event) {
       event.preventDefault();
 
-      const email = document.getElementById("login-email").value.toUpperCase().trim();
+      const ingresado = document.getElementById("login-email").value.toUpperCase().trim();
       const pass = document.getElementById("login-pass").value;
       const errorDiv = document.getElementById("login-error");
       const btn = document.getElementById("login-btn");
@@ -233,9 +241,10 @@
       errorDiv.textContent = "";
       btn.disabled = true;
 
-      if (email === VALID_USER && pass === VALID_PASS) {
+      const usuario = USUARIOS_COTIZADOR.find(u => u.id === ingresado && u.pass === pass);
+      if (usuario) {
         sessionStorage.setItem("luna_auth", "true");
-        sessionStorage.setItem("luna_user", VALID_USER);
+        sessionStorage.setItem("luna_user", usuario.nombre);
         window.location.href = "./cotizador.html";
       } else {
         errorDiv.textContent = "Usuario o contraseña incorrectos";

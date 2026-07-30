@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#134289">
+<title>Panel de Administración — LUNA Grupo Inmobiliario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#134289; --navy-dark:#0f2a5e; --cyan:#00a3e0;
+    --red:#ef4444; --green:#16a34a; --amber:#d97706;
+    --g50:#f9fafb; --g100:#f3f4f6; --g200:#e5e7eb; --g400:#9ca3af;
+    --g600:#4b5563; --g900:#111827;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Inter',sans-serif;background:var(--g100);color:var(--g900);
+    -webkit-font-smoothing:antialiased;min-height:100vh;
+  }
+
+  header{
+    background:var(--navy);color:#fff;
+    padding:calc(16px + env(safe-area-inset-top)) 20px 16px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    box-shadow:0 2px 20px rgba(0,0,0,.25);position:sticky;top:0;z-index:100;
+  }
+  header h1{
+    font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;
+    letter-spacing:.5px;flex:1;min-width:180px;
+  }
+  .btn-header{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);
+    color:#fff;font-family:inherit;font-size:13px;font-weight:600;
+    padding:9px 14px;border-radius:999px;cursor:pointer;transition:background .2s;
+  }
+  .btn-header:hover{background:rgba(255,255,255,.18)}
+  .quien{font-size:12px;opacity:.85;width:100%}
+
+  .tabs{display:flex;gap:4px;background:#fff;padding:0 16px;border-bottom:1px solid var(--g200);position:sticky;top:0;z-index:90}
+  .tab{
+    background:none;border:none;border-bottom:3px solid transparent;
+    font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;
+    letter-spacing:.5px;text-transform:uppercase;color:var(--g600);
+    padding:14px 16px;cursor:pointer;transition:all .2s;
+  }
+  .tab.activa{color:var(--navy);border-bottom-color:var(--cyan)}
+
+  main{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+  .panel{display:none}
+  .panel.activo{display:block}
+
+  .card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .card h2{
+    font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;
+    color:var(--navy);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;
+  }
+
+  label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:5px}
+  input,select{
+    width:100%;border:1.5px solid var(--g200);border-radius:9px;padding:11px 12px;
+    background:var(--g50);outline:none;font-family:'Inter',sans-serif;font-size:14px;
+    min-height:44px;transition:border-color .15s,background .15s;
+  }
+  input:focus,select:focus{border-color:var(--cyan);background:#fff}
+  .fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+
+  .btn{
+    background:var(--navy);color:#fff;border:none;border-radius:10px;padding:12px 20px;
+    font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+    letter-spacing:.8px;text-transform:uppercase;cursor:pointer;min-height:46px;
+    transition:opacity .15s,transform .1s;
+  }
+  .btn:hover{opacity:.9}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-sec{background:var(--g100);color:var(--navy);border:1px solid var(--g200)}
+  .btn-mini{
+    font-family:'Inter',sans-serif;font-size:12px;font-weight:600;text-transform:none;
+    letter-spacing:0;padding:7px 11px;min-height:34px;border-radius:8px;
+    background:var(--g100);color:var(--g900);border:1px solid var(--g200);cursor:pointer;
+  }
+  .btn-mini:hover{background:var(--g200)}
+  .btn-mini.peligro{color:var(--red);border-color:#fecaca;background:#fef2f2}
+
+  .tabla-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+  th{
+    text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.7px;color:var(--g600);padding:10px 8px;border-bottom:2px solid var(--g200);white-space:nowrap;
+  }
+  td{padding:11px 8px;border-bottom:1px solid var(--g100);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+
+  .chip{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+  .chip.super{background:#e0e7ff;color:#3730a3}
+  .chip.asesor{background:#e0f2fe;color:#075985}
+  .chip.on{background:#dcfce7;color:#166534}
+  .chip.off{background:#fee2e2;color:#991b1b}
+  .chip.accion{background:var(--g100);color:var(--g600);font-family:ui-monospace,monospace}
+  .chip.accion.falla{background:#fef2f2;color:#991b1b}
+
+  .aviso{padding:12px 14px;border-radius:9px;font-size:13px;font-weight:500;margin-bottom:14px;display:none}
+  .aviso.ok{background:#dcfce7;color:#166534;display:block}
+  .aviso.error{background:#fee2e2;color:#991b1b;display:block}
+  .vacio{text-align:center;color:var(--g400);padding:34px 12px;font-size:14px}
+  .acciones{display:flex;gap:6px;flex-wrap:wrap}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  .nota{font-size:12px;color:var(--g600);margin-top:10px;line-height:1.5}
+
+  @media (max-width:600px){
+    main{padding:14px 10px 50px}
+    .card{padding:15px}
+    header h1{font-size:17px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Panel de Administración</h1>
+  <button class="btn-header" onclick="window.location.href='./cotizador.html'">← Cotizador</button>
+  <button class="btn-header" onclick="salir()">Cerrar sesión</button>
+  <div class="quien" id="quien">…</div>
+</header>
+
+<div class="tabs">
+  <button class="tab activa" id="tab-usuarios" onclick="verPanel('usuarios')">Usuarios</button>
+  <button class="tab" id="tab-bitacora" onclick="verPanel('bitacora')">Bitácora</button>
+</div>
+
+<main>
+  <!-- ── USUARIOS ─────────────────────────────────────────── -->
+  <section class="panel activo" id="panel-usuarios">
+    <div class="aviso" id="aviso-usuarios"></div>
+
+    <div class="card">
+      <h2>Agregar usuario</h2>
+      <form onsubmit="crearUsuario(event)">
+        <div class="fila">
+          <div>
+            <label for="nuevo-id">Usuario o correo</label>
+            <input type="text" id="nuevo-id" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="correo@ejemplo.com" required>
+          </div>
+          <div>
+            <label for="nuevo-nombre">Nombre completo</label>
+            <input type="text" id="nuevo-nombre" placeholder="Nombre y apellido">
+          </div>
+        </div>
+        <div class="fila">
+          <div>
+            <label for="nueva-pass">Contraseña</label>
+            <input type="text" id="nueva-pass" minlength="8" placeholder="Mínimo 8 caracteres" required>
+          </div>
+          <div>
+            <label for="nuevo-rol">Rol</label>
+            <select id="nuevo-rol">
+              <option value="ASESOR">Asesor — solo usa el cotizador</option>
+              <option value="SUPERADMIN">Superadmin — además gestiona usuarios</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn" id="btn-crear">Agregar usuario</button>
+        <p class="nota">La contraseña se le entrega a la persona por fuera. Aquí solo se guarda cifrada, así que no se puede consultar después: si se le olvida, se le asigna una nueva.</p>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Usuarios con acceso</h2>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tbody-usuarios">
+            <tr><td colspan="6" class="vacio">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BITÁCORA ─────────────────────────────────────────── -->
+  <section class="panel" id="panel-bitacora">
+    <div class="aviso" id="aviso-bitacora"></div>
+
+    <div class="card">
+      <h2>Quién ha entrado</h2>
+      <div class="fila">
+        <div>
+          <label for="filtro-accion">Tipo de movimiento</label>
+          <select id="filtro-accion" onchange="cargarBitacora()">
+            <option value="">Todos</option>
+            <option value="LOGIN">Ingresos correctos</option>
+            <option value="LOGIN_FALLIDO">Intentos fallidos</option>
+            <option value="LOGOUT">Cierres de sesión</option>
+            <option value="CREAR_USUARIO">Usuarios creados</option>
+            <option value="EDITAR_USUARIO">Usuarios editados</option>
+            <option value="ELIMINAR_USUARIO">Usuarios eliminados</option>
+          </select>
+        </div>
+        <div>
+          <label for="filtro-usuario">Usuario</label>
+          <input type="text" id="filtro-usuario" placeholder="Todos" autocapitalize="none" onchange="cargarBitacora()">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-sec" onclick="cargarBitacora()" style="width:100%">Actualizar</button>
+        </div>
+      </div>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Fecha y hora</th><th>Usuario</th><th>Movimiento</th><th>IP</th><th>Detalle</th></tr>
+          </thead>
+          <tbody id="tbody-bitacora">
+            <tr><td colspan="5" class="vacio">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="nota">Se guardan los últimos 90 días. Las horas son las de tu dispositivo.</p>
+    </div>
+  </section>
+</main>
+
+<script src="./api.js"></script>
+<script>
+  // ── Utilidades ──────────────────────────────────────────
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function avisar(panel, mensaje, tipo){
+    var el = document.getElementById('aviso-' + panel);
+    el.className = 'aviso ' + (tipo || 'ok');
+    el.textContent = mensaje;
+    if (tipo !== 'error') setTimeout(function(){ el.className = 'aviso'; }, 4000);
+  }
+
+  function fecha(iso){
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString('es-MX', {day:'2-digit', month:'short'}) + ' ' +
+             d.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+    } catch(e){ return iso || '—'; }
+  }
+
+  function verPanel(cual){
+    ['usuarios','bitacora'].forEach(function(p){
+      document.getElementById('panel-' + p).classList.toggle('activo', p === cual);
+      document.getElementById('tab-' + p).classList.toggle('activa', p === cual);
+    });
+    if (cual === 'bitacora') cargarBitacora();
+  }
+
+  async function salir(){
+    if (!confirm('¿Cerrar sesión?')) return;
+    await LunaAuth.logout();
+    window.location.href = './index.html';
+  }
+
+  // ── Usuarios ────────────────────────────────────────────
+  async function cargarUsuarios(){
+    var tb = document.getElementById('tbody-usuarios');
+    try {
+      var r = await LunaAuth.listarUsuarios();
+      if (!r.items.length){
+        tb.innerHTML = '<tr><td colspan="6" class="vacio">Todavía no hay usuarios.</td></tr>';
+        return;
+      }
+      var yo = LunaAuth.id();
+      tb.innerHTML = r.items.map(function(u){
+        var soyYo = u.id === yo;
+        return '<tr>' +
+          '<td class="mono">' + esc(u.id) + (soyYo ? ' <span class="chip super">tú</span>' : '') + '</td>' +
+          '<td>' + esc(u.nombre || '—') + '</td>' +
+          '<td><span class="chip ' + (u.rol === 'SUPERADMIN' ? 'super' : 'asesor') + '">' + esc(u.rol) + '</span></td>' +
+          '<td><span class="chip ' + (u.activo ? 'on' : 'off') + '">' + (u.activo ? 'Activo' : 'Inactivo') + '</span></td>' +
+          '<td>' + (u.ultimoAcceso ? fecha(u.ultimoAcceso) : '<span style="color:var(--g400)">nunca</span>') + '</td>' +
+          '<td><div class="acciones">' +
+            '<button class="btn-mini" onclick="cambiarPass(\'' + esc(u.id) + '\')">Cambiar contraseña</button>' +
+            (soyYo ? '' :
+              '<button class="btn-mini" onclick="alternarActivo(\'' + esc(u.id) + '\',' + (u.activo ? 'false' : 'true') + ')">' +
+                (u.activo ? 'Desactivar' : 'Reactivar') + '</button>' +
+              '<button class="btn-mini peligro" onclick="borrarUsuario(\'' + esc(u.id) + '\')">Eliminar</button>') +
+          '</div></td>' +
+        '</tr>';
+      }).join('');
+    } catch(e){
+      tb.innerHTML = '<tr><td colspan="6" class="vacio">No se pudo cargar: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  async function crearUsuario(ev){
+    ev.preventDefault();
+    var btn = document.getElementById('btn-crear');
+    var id = document.getElementById('nuevo-id').value.trim();
+    var pass = document.getElementById('nueva-pass').value;
+    if (pass.length < 8){ avisar('usuarios','La contraseña debe tener al menos 8 caracteres.','error'); return; }
+    btn.disabled = true;
+    try {
+      await LunaAuth.crearUsuario({
+        id: id,
+        nombre: document.getElementById('nuevo-nombre').value.trim(),
+        password: pass,
+        rol: document.getElementById('nuevo-rol').value
+      });
+      avisar('usuarios','Usuario "' + id + '" agregado. Entrégale su contraseña.','ok');
+      document.getElementById('nuevo-id').value = '';
+      document.getElementById('nuevo-nombre').value = '';
+      document.getElementById('nueva-pass').value = '';
+      cargarUsuarios();
+    } catch(e){
+      avisar('usuarios', e.message, 'error');
+    } finally { btn.disabled = false; }
+  }
+
+  async function cambiarPass(id){
+    var nueva = prompt('Nueva contraseña para ' + id + ' (mínimo 8 caracteres).\n\nAl guardarla se cerrará la sesión que tenga abierta.');
+    if (nueva === null) return;
+    if (nueva.length < 8){ avisar('usuarios','La contraseña debe tener al menos 8 caracteres.','error'); return; }
+    try {
+      await LunaAuth.editarUsuario(id, { password: nueva });
+      avisar('usuarios','Contraseña de "' + id + '" actualizada.','ok');
+      cargarUsuarios();
+    } catch(e){ avisar('usuarios', e.message, 'error'); }
+  }
+
+  async function alternarActivo(id, activar){
+    var verbo = activar ? 'reactivar' : 'desactivar';
+    if (!confirm('¿Seguro que quieres ' + verbo + ' a ' + id + '?' + (activar ? '' : '\n\nNo podrá entrar hasta que lo reactives.'))) return;
+    try {
+      await LunaAuth.editarUsuario(id, { activo: activar });
+      avisar('usuarios','Usuario "' + id + '" ' + (activar ? 'reactivado' : 'desactivado') + '.','ok');
+      cargarUsuarios();
+    } catch(e){ avisar('usuarios', e.message, 'error'); }
+  }
+
+  async function borrarUsuario(id){
+    if (!confirm('¿Eliminar a ' + id + ' definitivamente?\n\nSi solo quieres quitarle el acceso por un tiempo, es mejor desactivarlo.')) return;
+    try {
+      await LunaAuth.eliminarUsuario(id);
+      avisar('usuarios','Usuario "' + id + '" eliminado.','ok');
+      cargarUsuarios();
+    } catch(e){ avisar('usuarios', e.message, 'error'); }
+  }
+
+  // ── Bitácora ────────────────────────────────────────────
+  async function cargarBitacora(){
+    var tb = document.getElementById('tbody-bitacora');
+    try {
+      var r = await LunaAuth.bitacora({
+        limite: 200,
+        accion: document.getElementById('filtro-accion').value,
+        usuario: document.getElementById('filtro-usuario').value.trim()
+      });
+      if (!r.items.length){
+        tb.innerHTML = '<tr><td colspan="5" class="vacio">Sin movimientos que coincidan.</td></tr>';
+        return;
+      }
+      tb.innerHTML = r.items.map(function(it){
+        var falla = it.accion === 'LOGIN_FALLIDO';
+        var det = it.detalles && Object.keys(it.detalles).length
+          ? Object.keys(it.detalles).map(function(k){
+              var v = it.detalles[k];
+              return esc(k) + ': ' + esc(Array.isArray(v) ? v.join(', ') : v);
+            }).join(' · ')
+          : '—';
+        return '<tr>' +
+          '<td>' + fecha(it.ts) + '</td>' +
+          '<td class="mono">' + esc(it.usuario) + '</td>' +
+          '<td><span class="chip accion' + (falla ? ' falla' : '') + '">' + esc(it.accion) + '</span></td>' +
+          '<td class="mono">' + esc(it.ip) + '</td>' +
+          '<td style="color:var(--g600)">' + det + '</td>' +
+        '</tr>';
+      }).join('');
+    } catch(e){
+      tb.innerHTML = '<tr><td colspan="5" class="vacio">No se pudo cargar: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  // ── Arranque ────────────────────────────────────────────
+  (async function(){
+    var u = await LunaAuth.verificarSesion();
+    if (!u){ window.location.href = './index.html'; return; }
+    if (u.rol !== 'SUPERADMIN'){
+      document.body.innerHTML =
+        '<div style="max-width:440px;margin:80px auto;padding:30px;text-align:center;font-family:Inter,sans-serif">' +
+        '<h1 style="font-family:Barlow Condensed,sans-serif;color:#134289;margin-bottom:10px">Sin acceso</h1>' +
+        '<p style="color:#4b5563;margin-bottom:22px">Este panel es solo para el administrador.</p>' +
+        '<a href="./cotizador.html" style="color:#00a3e0;font-weight:600">Volver al cotizador</a></div>';
+      return;
+    }
+    document.getElementById('quien').textContent = (u.nombre || u.id) + ' · Superadmin';
+    cargarUsuarios();
+  })();
+</script>
+</body>
+</html>

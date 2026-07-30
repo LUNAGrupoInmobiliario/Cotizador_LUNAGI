@@ -220,45 +220,30 @@
     </div>
   </div>
 
+  <script src="./api.js"></script>
   <script>
-    // Usuarios con acceso al cotizador. La clave `id` va en MAYÚSCULAS porque el
-    // input se normaliza a mayúsculas antes de comparar (los correos no distinguen
-    // mayúsculas); la contraseña sí distingue.
-    // Al agregar un usuario aquí, agregarlo también en index.html.
-    const USUARIOS_COTIZADOR = [
-      { id: "ORLANDO FALCONI",      pass: "123456",     nombre: "Orlando Falconi" },
-      { id: "LORZOYARI4@GMAIL.COM", pass: "yarilorzo4", nombre: "Yaritza Lorzo"   }
-    ];
-
-    function doLogin(event) {
+    // Los usuarios ya no viven aquí: los administra el superadmin desde
+    // admin.html y se validan contra la API (ver api.js).
+    async function doLogin(event) {
       event.preventDefault();
 
-      const ingresado = document.getElementById("login-email").value.toUpperCase().trim();
-      const pass = document.getElementById("login-pass").value;
       const errorDiv = document.getElementById("login-error");
       const btn = document.getElementById("login-btn");
-
       errorDiv.textContent = "";
       btn.disabled = true;
 
-      const usuario = USUARIOS_COTIZADOR.find(u => u.id === ingresado && u.pass === pass);
-      if (usuario) {
-        sessionStorage.setItem("luna_auth", "true");
-        sessionStorage.setItem("luna_user", usuario.nombre);
+      try {
+        await LunaAuth.login(
+          document.getElementById("login-email").value,
+          document.getElementById("login-pass").value
+        );
         window.location.href = "./cotizador.html";
-      } else {
-        errorDiv.textContent = "Usuario o contraseña incorrectos";
+      } catch (e) {
+        errorDiv.textContent = e.message || "Usuario o contraseña incorrectos";
         btn.disabled = false;
         document.getElementById("login-pass").value = "";
       }
     }
-
-    // Prevenir acceso directo a cotizador sin login
-    window.addEventListener("beforeunload", () => {
-      if (!sessionStorage.getItem("luna_auth")) {
-        // Bloqueado en cotizador.html
-      }
-    });
   </script>
 </body>
 </html>

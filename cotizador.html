@@ -317,6 +317,7 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
     pointer-events: none;
   }
   .logout-float-btn.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .logout-float-btn { display: flex; gap: 8px; }
   .logout-float-btn .header-logout {
     background: var(--navy);
     border: 1px solid rgba(255,255,255,.35);
@@ -336,7 +337,10 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
   .logout-float-btn .header-logout:active { transform: scale(.96); }
   @media print { .logout-float-btn { display: none !important; } }
 </style>
+<script src="./api.js"></script>
 <script>
+  // Corte inmediato para no alcanzar a mostrar el cotizador a quien no entró.
+  // La validación real contra el servidor va al final del archivo.
   if (!sessionStorage.getItem("luna_auth")) {
     window.location.href = "./login.html";
   }
@@ -359,6 +363,7 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
   </div>
 </header>
 <div class="logout-float-btn" id="logoutFloatBtn">
+  <button class="header-logout" id="panelBtn" type="button" onclick="window.location.href='./admin.html'" title="Panel de administración" style="display:none">Panel</button>
   <button class="header-logout" id="logoutBtn" type="button" onclick="doLogout()" title="Cerrar sesión">Cerrar sesión</button>
 </div>
 <div id="inAppBanner" class="inapp-banner" style="display:none;">
@@ -1454,10 +1459,9 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
   });
 </script>
 <script>
-  function doLogout() {
+  async function doLogout() {
     if (!confirm('¿Cerrar sesión?')) return;
-    sessionStorage.removeItem('luna_auth');
-    sessionStorage.removeItem('luna_user');
+    await LunaAuth.logout();
     window.location.href = './index.html';
   }
 
@@ -1470,6 +1474,18 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
     }
     window.addEventListener('scroll', syncLogoutBtn, { passive: true });
     syncLogoutBtn();
+  })();
+
+  // Confirma con el servidor que la sesión sigue siendo válida (pudo vencer o
+  // el superadmin pudo cambiar la contraseña) y muestra el acceso al panel
+  // solo si quien entró es superadmin.
+  (async function () {
+    var u = await LunaAuth.verificarSesion();
+    if (!u) { window.location.href = './login.html'; return; }
+    if (u.rol === 'SUPERADMIN') {
+      var panel = document.getElementById('panelBtn');
+      if (panel) panel.style.display = '';
+    }
   })();
 </script>
 </body>

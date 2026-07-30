@@ -30,6 +30,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="./api.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
 
@@ -941,30 +942,22 @@ function loginToEmail(v){
   v=v.trim().toLowerCase();
   return v.includes('@')?v:`${v}@${LOGIN_DOMAIN}`;
 }
-// Usuarios con acceso al cotizador. La clave `id` va en MAYÚSCULAS porque el
-// input se normaliza a mayúsculas antes de comparar (los correos no distinguen
-// mayúsculas); la contraseña sí distingue.
-// Al agregar un usuario aquí, agregarlo también en login.html.
-const USUARIOS_COTIZADOR = [
-  { id: "ORLANDO FALCONI",      pass: "123456",     nombre: "Orlando Falconi" },
-  { id: "LORZOYARI4@GMAIL.COM", pass: "yarilorzo4", nombre: "Yaritza Lorzo"   }
-];
-
+// Los usuarios ya no viven aquí: los administra el superadmin desde
+// admin.html y se validan contra la API (ver api.js).
 async function doLogin(ev){
   ev.preventDefault();
-  const ingresado = document.getElementById("login-email").value.toUpperCase().trim();
-  const pass = document.getElementById("login-pass").value;
   const btn = document.getElementById("login-btn");
   const err = document.getElementById("login-error");
   err.textContent = "";
   btn.disabled = true;
-  const usuario = USUARIOS_COTIZADOR.find(u => u.id === ingresado && u.pass === pass);
-  if (usuario) {
-    sessionStorage.setItem("luna_auth", "true");
-    sessionStorage.setItem("luna_user", usuario.nombre);
+  try {
+    await LunaAuth.login(
+      document.getElementById("login-email").value,
+      document.getElementById("login-pass").value
+    );
     window.location.href = "./cotizador.html";
-  } else {
-    err.textContent = "Usuario o contraseña incorrectos";
+  } catch (e) {
+    err.textContent = e.message || "Usuario o contraseña incorrectos";
     btn.disabled = false;
     document.getElementById("login-pass").value = "";
   }

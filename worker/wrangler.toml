@@ -10,7 +10,7 @@ workers_dev = true
 #   npx wrangler kv namespace create USUARIOS
 [[kv_namespaces]]
 binding = "USUARIOS"
-id = "PENDIENTE_CREAR_NAMESPACE"
+id = "e89edd6842ea4057bc3d659f244ab86b"
 
 [vars]
 # Origen permitido para CORS. Cambiar si el frontend se muda de dominio.

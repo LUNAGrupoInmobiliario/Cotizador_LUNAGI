@@ -217,8 +217,11 @@ async function bootstrap(request, env) {
     return error(env, 'Ya existen usuarios. El bootstrap solo corre una vez.', 409);
   }
   const body = await request.json().catch(() => ({}));
-  const secreto = request.headers.get('X-Bootstrap-Secret') || '';
-  if (!env.BOOTSTRAP_SECRET || !timingSafeCompare(secreto, env.BOOTSTRAP_SECRET)) {
+  // Se recortan espacios: al guardar el secreto por CLI es facil que se cuele
+  // un salto de linea al final.
+  const secreto = String(request.headers.get('X-Bootstrap-Secret') || '').trim();
+  const esperado = String(env.BOOTSTRAP_SECRET || '').trim();
+  if (!esperado || !timingSafeCompare(secreto, esperado)) {
     return error(env, 'Secreto de bootstrap invalido', 403);
   }
   const id = normalizarId(body.id);

@@ -19,23 +19,29 @@ const USERS_PREFIX = 'user:';
 const TOKENS_PREFIX = 'token:';
 const AUDIT_PREFIX = 'audit:';
 const RATE_LIMIT_PREFIX = 'ratelimit:';
+const COT_PREFIX = 'cot:';
+const LANDING_PREFIX = 'landing:';
 
-const TOKEN_TTL = 7 * 24 * 60 * 60;   // 7 dias
-const AUDIT_TTL = 90 * 24 * 60 * 60;  // 90 dias
-const RATE_LIMIT_WINDOW = 60;         // 1 minuto
-const MAX_LOGIN_ATTEMPTS = 5;         // por IP y por minuto
-const MAX_REQUESTS = 100;             // por IP y por minuto
+const TOKEN_TTL = 7 * 24 * 60 * 60;      // 7 dias
+const AUDIT_TTL = 90 * 24 * 60 * 60;     // 90 dias
+const LANDING_TTL = 30 * 24 * 60 * 60;   // 30 dias
+const RATE_LIMIT_WINDOW = 60;            // 1 minuto
+const MAX_LOGIN_ATTEMPTS = 5;            // por IP y por minuto
+const MAX_REQUESTS = 100;                // por IP y por minuto
 
 // Permisos (bit flags)
 const PERM = {
   VIEW_COTIZADOR: 1,
+  CREATE_COTIZACIONES: 2,
+  VIEW_ALL_COTIZACIONES: 8,
   VIEW_AUDIT: 64,
   MANAGE_USERS: 128
 };
 
 const ROLES = {
-  SUPERADMIN: PERM.VIEW_COTIZADOR | PERM.VIEW_AUDIT | PERM.MANAGE_USERS, // 193
-  ASESOR: PERM.VIEW_COTIZADOR                                            // 1
+  SUPERADMIN: PERM.VIEW_COTIZADOR | PERM.CREATE_COTIZACIONES | PERM.VIEW_ALL_COTIZACIONES |
+              PERM.VIEW_AUDIT | PERM.MANAGE_USERS,                    // 203
+  ASESOR: PERM.VIEW_COTIZADOR | PERM.CREATE_COTIZACIONES              // 3
 };
 
 // ── Utilidades ────────────────────────────────────────────────────────
@@ -200,6 +206,14 @@ export default {
         return usuarioIndividual(request, env, metodo, decodeURIComponent(ruta.slice('/api/users/'.length)));
       }
       if (ruta === '/api/audit' && metodo === 'GET') return auditoria(request, env, url);
+      if (ruta === '/api/cotizaciones') return cotizaciones(request, env, metodo);
+      if (ruta.startsWith('/api/cotizaciones/')) {
+        return cotizacionIndividual(request, env, metodo, decodeURIComponent(ruta.slice('/api/cotizaciones/'.length)));
+      }
+      // Landing publica: la abre el cliente, sin sesion
+      if (ruta.startsWith('/landing/') && metodo === 'GET') {
+        return landing(request, env, decodeURIComponent(ruta.slice('/landing/'.length)));
+      }
 
       return error(env, 'Ruta no encontrada', 404);
     } catch (e) {
@@ -397,6 +411,179 @@ async function usuarioIndividual(request, env, metodo, idBruto) {
   return error(env, 'Metodo no permitido', 405);
 }
 
+// ── LANDING PUBLICA ───────────────────────────────────────────────────
+
+function escHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function dinero(v, moneda) {
+  if (v == null || v === '') return '—';
+  const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9.-]/g, ''));
+  if (isNaN(n)) return escHtml(v);
+  return (moneda === 'USD' ? 'USD ' : '$') +
+    n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fechaLarga(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso.length <= 10 ? iso + 'T12:00:00' : iso);
+    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch (e) { return escHtml(iso); }
+}
+
+function paginaSimple(titulo, mensaje) {
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + escHtml(titulo) + '</title></head>' +
+    '<body style="font-family:system-ui,sans-serif;background:#f3f4f6;margin:0;' +
+    'display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px">' +
+    '<div style="background:#fff;border-radius:16px;padding:36px;max-width:420px;text-align:center;' +
+    'box-shadow:0 4px 24px rgba(0,0,0,.08)">' +
+    '<h1 style="color:#134289;font-size:21px;margin:0 0 10px">' + escHtml(titulo) + '</h1>' +
+    '<p style="color:#4b5563;margin:0;line-height:1.6">' + escHtml(mensaje) + '</p>' +
+    '</div></body></html>';
+}
+
+function htmlLanding(c) {
+  const m = c.moneda;
+  const filas = (c.amortizacion || []).map(function (f, i) {
+    return '<tr><td>' + (i + 1) + '</td><td>' + escHtml(f.fecha || '') + '</td>' +
+      '<td>' + dinero(f.balanceInicial, m) + '</td>' +
+      '<td>' + dinero(f.pago, m) + '</td>' +
+      '<td>' + dinero(f.interes, m) + '</td>' +
+      '<td>' + dinero(f.capital, m) + '</td>' +
+      '<td>' + dinero(f.balanceFinal, m) + '</td></tr>';
+  }).join('');
+
+  const ubicacion = [
+    c.manzana ? 'Manzana ' + escHtml(c.manzana) : '',
+    c.lote ? 'Lote ' + escHtml(c.lote) : ''
+  ].filter(Boolean).join(' · ') || '—';
+
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+'<meta name="viewport" content="width=device-width,initial-scale=1">' +
+'<meta name="theme-color" content="#134289">' +
+'<meta name="robots" content="noindex,nofollow">' +
+'<title>Cotizacion ' + escHtml(c.folio) + ' — LUNA Grupo Inmobiliario</title>' +
+'<link rel="preconnect" href="https://fonts.googleapis.com">' +
+'<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+'<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+'<style>' +
+'*{margin:0;padding:0;box-sizing:border-box}' +
+'body{font-family:Inter,sans-serif;background:#f3f4f6;color:#111827;-webkit-font-smoothing:antialiased}' +
+'header{background:#134289;color:#fff;padding:26px 20px;text-align:center}' +
+'header h1{font-family:Barlow Condensed,sans-serif;font-size:26px;letter-spacing:.5px}' +
+'header p{opacity:.85;font-size:13px;margin-top:4px}' +
+'main{max-width:900px;margin:0 auto;padding:22px 16px 60px}' +
+'.card{background:#fff;border-radius:14px;padding:22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}' +
+'.card h2{font-family:Barlow Condensed,sans-serif;font-size:16px;color:#134289;letter-spacing:.6px;' +
+'text-transform:uppercase;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid #e5e7eb}' +
+'.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}' +
+'.dato .k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#6b7280;margin-bottom:3px}' +
+'.dato .v{font-size:15px;font-weight:600}' +
+'.destacados{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}' +
+'.destacado{background:linear-gradient(135deg,#134289,#00a3e0);color:#fff;border-radius:12px;padding:16px;text-align:center}' +
+'.destacado .k{font-size:10px;text-transform:uppercase;letter-spacing:.8px;opacity:.9;margin-bottom:5px}' +
+'.destacado .v{font-family:Barlow Condensed,sans-serif;font-size:23px;font-weight:700}' +
+'.tabla-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}' +
+'table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}' +
+'th{background:#f9fafb;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;' +
+'color:#4b5563;padding:9px 7px;border-bottom:2px solid #e5e7eb;white-space:nowrap}' +
+'td{padding:8px 7px;border-bottom:1px solid #f3f4f6;white-space:nowrap}' +
+'tbody tr:nth-child(even){background:#fafafa}' +
+'footer{max-width:900px;margin:0 auto;padding:0 16px 40px;font-size:11.5px;color:#6b7280;line-height:1.65}' +
+'footer strong{color:#374151}' +
+'@media print{body{background:#fff}.card{box-shadow:none;border:1px solid #e5e7eb}}' +
+'</style></head><body>' +
+
+'<header><h1>Cotizacion de Lote de Inversion</h1>' +
+'<p>LUNA Grupo Inmobiliario · Folio ' + escHtml(c.folio) + '</p></header>' +
+
+'<main>' +
+
+'<div class="card"><h2>Datos generales</h2><div class="grid">' +
+'<div class="dato"><div class="k">Inversionista</div><div class="v">' + escHtml(c.cliente || '—') + '</div></div>' +
+'<div class="dato"><div class="k">Proyecto</div><div class="v">' + escHtml(c.proyecto || '—') + '</div></div>' +
+'<div class="dato"><div class="k">Ubicacion</div><div class="v">' + ubicacion + '</div></div>' +
+'<div class="dato"><div class="k">Asesor</div><div class="v">' + escHtml(c.asesor || '—') + '</div></div>' +
+'<div class="dato"><div class="k">Fecha</div><div class="v">' + fechaLarga(c.creadoEn) + '</div></div>' +
+'<div class="dato"><div class="k">Moneda</div><div class="v">' + escHtml(m) + '</div></div>' +
+'</div></div>' +
+
+'<div class="card"><h2>Resumen</h2><div class="destacados">' +
+'<div class="destacado"><div class="k">Precio</div><div class="v">' + dinero(c.precioPropiedad, m) + '</div></div>' +
+'<div class="destacado"><div class="k">Pago mensual</div><div class="v">' + dinero(c.pagoMensual, m) + '</div></div>' +
+'<div class="destacado"><div class="k">Plazo</div><div class="v">' + escHtml(c.plazoMeses || '—') + ' meses</div></div>' +
+'<div class="destacado"><div class="k">Total a pagar</div><div class="v">' + dinero(c.totalPagar, m) + '</div></div>' +
+'</div></div>' +
+
+'<div class="card"><h2>Detalle del lote y financiamiento</h2><div class="grid">' +
+'<div class="dato"><div class="k">Precio por m2</div><div class="v">' + dinero(c.precioM2, m) + '</div></div>' +
+'<div class="dato"><div class="k">Superficie</div><div class="v">' + escHtml(c.m2 || '—') + ' m2</div></div>' +
+'<div class="dato"><div class="k">Apartado</div><div class="v">' + dinero(c.apartado, m) + '</div></div>' +
+'<div class="dato"><div class="k">Enganche</div><div class="v">' + dinero(c.engancheCalculado, m) + '</div></div>' +
+'<div class="dato"><div class="k">Comision de apertura</div><div class="v">' + dinero(c.comisionApertura, m) + '</div></div>' +
+'<div class="dato"><div class="k">Monto a financiar</div><div class="v">' + dinero(c.montoFinanciar, m) + '</div></div>' +
+'<div class="dato"><div class="k">Tasa anual</div><div class="v">' + escHtml(c.tasaAnual || '—') + '%</div></div>' +
+'<div class="dato"><div class="k">Fecha de reserva</div><div class="v">' + fechaLarga(c.fechaReserva) + '</div></div>' +
+'<div class="dato"><div class="k">Fecha de enganche</div><div class="v">' + fechaLarga(c.fechaEnganche) + '</div></div>' +
+'<div class="dato"><div class="k">Primer pago</div><div class="v">' + fechaLarga(c.fechaPrimerPago) + '</div></div>' +
+'</div></div>' +
+
+(filas ?
+'<div class="card"><h2>Tabla de amortizacion</h2><div class="tabla-wrap"><table>' +
+'<thead><tr><th>#</th><th>Fecha</th><th>Balance inicial</th><th>Pago</th>' +
+'<th>Interes</th><th>Capital</th><th>Balance final</th></tr></thead>' +
+'<tbody>' + filas + '</tbody></table></div></div>' : '') +
+
+'</main>' +
+
+'<footer>' +
+'<p><strong>Vigencia:</strong> esta cotizacion es valida por 5 dias naturales a partir de su emision. ' +
+'Despues de ese plazo los precios y condiciones pueden cambiar.</p>' +
+'<p style="margin-top:8px"><strong>Apartado:</strong> el pago del apartado no es reembolsable. ' +
+'En caso de desistimiento se aplicara a gastos administrativos y de oportunidad.</p>' +
+'<p style="margin-top:8px"><strong>Confidencialidad:</strong> este documento contiene informacion ' +
+'confidencial de uso exclusivo para su destinatario.</p>' +
+'<p style="margin-top:14px;color:#9ca3af">Enlace privado. Expira el ' + fechaLarga(c.landingExpira) + '.</p>' +
+'</footer></body></html>';
+}
+
+async function landing(request, env, token) {
+  if (!token) return new Response(paginaSimple('Enlace incompleto', 'El enlace no esta completo.'), {
+    status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
+
+  const folio = await env.USUARIOS.get(LANDING_PREFIX + token);
+  if (!folio) {
+    return new Response(paginaSimple(
+      'Enlace no disponible',
+      'Este enlace ya expiro o no es valido. Los enlaces de cotizacion duran 30 dias. Pide uno nuevo a tu asesor.'
+    ), { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+
+  const raw = await env.USUARIOS.get(COT_PREFIX + folio);
+  if (!raw) {
+    return new Response(paginaSimple(
+      'Cotizacion no disponible',
+      'La cotizacion asociada a este enlace ya no existe.'
+    ), { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+
+  return new Response(htmlLanding(JSON.parse(raw)), {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Robots-Tag': 'noindex, nofollow',
+      'Cache-Control': 'no-store'
+    }
+  });
+}
+
 /** Borra los tokens activos de un usuario (al cambiarle la clave o desactivarlo). */
 async function invalidarTokens(env, id) {
   const lista = await env.USUARIOS.list({ prefix: TOKENS_PREFIX });
@@ -431,4 +618,146 @@ async function auditoria(request, env, url) {
   }
 
   return json(env, { items, total: items.length });
+}
+
+// ── COTIZACIONES Y LANDINGS ───────────────────────────────────────────
+
+function generarFolio(fecha) {
+  const f = fecha.toISOString().slice(0, 10).replace(/-/g, '');
+  const r = bufToHex(crypto.getRandomValues(new Uint8Array(2))).toUpperCase();
+  return 'COT-' + f + '-' + r;
+}
+
+/** Resumen para listados: sin la tabla de amortizacion, que es larga. */
+function cotResumen(c) {
+  return {
+    folio: c.folio,
+    cliente: c.cliente,
+    proyecto: c.proyecto,
+    asesor: c.asesor,
+    manzana: c.manzana,
+    lote: c.lote,
+    moneda: c.moneda,
+    precioPropiedad: c.precioPropiedad,
+    pagoMensual: c.pagoMensual,
+    plazoMeses: c.plazoMeses,
+    creadoEn: c.creadoEn,
+    creadoPor: c.creadoPor,
+    landingToken: c.landingToken,
+    landingExpira: c.landingExpira
+  };
+}
+
+async function cotizaciones(request, env, metodo) {
+  const actual = await getUserByToken(env, request.headers.get('X-Auth-Token'));
+  if (!actual) return error(env, 'No autenticado', 401);
+
+  if (metodo === 'GET') {
+    const lista = await env.USUARIOS.list({ prefix: COT_PREFIX });
+    const verTodas = tiene(actual, PERM.VIEW_ALL_COTIZACIONES);
+    const items = [];
+    for (const k of lista.keys) {
+      const raw = await env.USUARIOS.get(k.name);
+      if (!raw) continue;
+      const c = JSON.parse(raw);
+      // El asesor solo ve las suyas; el superadmin ve todas.
+      if (!verTodas && c.creadoPor !== actual.id) continue;
+      items.push(cotResumen(c));
+    }
+    items.sort((a, b) => String(b.creadoEn).localeCompare(String(a.creadoEn)));
+    return json(env, { items, total: items.length });
+  }
+
+  if (metodo === 'POST') {
+    if (!tiene(actual, PERM.CREATE_COTIZACIONES)) {
+      return error(env, 'Sin permiso para crear cotizaciones', 403);
+    }
+    const body = await request.json().catch(() => ({}));
+    if (!body.cliente || !body.proyecto) {
+      return error(env, 'Faltan el cliente y el proyecto', 400);
+    }
+
+    const ahora = new Date();
+    const folio = generarFolio(ahora);
+    const landingToken = bufToHex(crypto.getRandomValues(new Uint8Array(16))); // 32 chars
+    const expira = new Date(ahora.getTime() + LANDING_TTL * 1000);
+
+    const cot = {
+      folio,
+      landingToken,
+      landingExpira: expira.toISOString(),
+      creadoEn: ahora.toISOString(),
+      creadoPor: actual.id,
+      creadoPorNombre: actual.nombre || actual.id,
+
+      cliente: String(body.cliente || ''),
+      proyecto: String(body.proyecto || ''),
+      asesor: String(body.asesor || ''),
+      manzana: String(body.manzana || ''),
+      lote: String(body.lote || ''),
+
+      moneda: body.moneda === 'USD' ? 'USD' : 'MXN',
+      tipoCambio: body.tipoCambio || null,
+      precioM2: body.precioM2 || null,
+      m2: body.m2 || null,
+      precioPropiedad: body.precioPropiedad || null,
+      apartado: body.apartado || null,
+      engancheCalculado: body.engancheCalculado || null,
+      comisionApertura: body.comisionApertura || null,
+      montoFinanciar: body.montoFinanciar || null,
+      tasaAnual: body.tasaAnual || null,
+      plazoMeses: body.plazoMeses || null,
+      pagoMensual: body.pagoMensual || null,
+      totalPagar: body.totalPagar || null,
+
+      fechaReserva: body.fechaReserva || null,
+      fechaEnganche: body.fechaEnganche || null,
+      fechaPrimerPago: body.fechaPrimerPago || null,
+
+      amortizacion: Array.isArray(body.amortizacion) ? body.amortizacion.slice(0, 400) : []
+    };
+
+    await env.USUARIOS.put(COT_PREFIX + folio, JSON.stringify(cot));
+    // El token de landing caduca solo a los 30 dias.
+    await env.USUARIOS.put(LANDING_PREFIX + landingToken, folio, { expirationTtl: LANDING_TTL });
+    await auditar(env, request, actual.id, 'CREAR_COTIZACION', { folio, cliente: cot.cliente });
+
+    return json(env, {
+      ok: true,
+      folio,
+      landingToken,
+      landingUrl: new URL(request.url).origin + '/landing/' + landingToken,
+      expira: cot.landingExpira
+    }, 201);
+  }
+
+  return error(env, 'Metodo no permitido', 405);
+}
+
+async function cotizacionIndividual(request, env, metodo, folio) {
+  const actual = await getUserByToken(env, request.headers.get('X-Auth-Token'));
+  if (!actual) return error(env, 'No autenticado', 401);
+
+  const raw = await env.USUARIOS.get(COT_PREFIX + folio);
+  if (!raw) return error(env, 'Cotizacion no encontrada', 404);
+  const cot = JSON.parse(raw);
+
+  const propia = cot.creadoPor === actual.id;
+  if (!propia && !tiene(actual, PERM.VIEW_ALL_COTIZACIONES)) {
+    return error(env, 'Sin permiso para ver esta cotizacion', 403);
+  }
+
+  if (metodo === 'GET') return json(env, { cotizacion: cot });
+
+  if (metodo === 'DELETE') {
+    if (!tiene(actual, PERM.VIEW_ALL_COTIZACIONES)) {
+      return error(env, 'Solo el administrador puede eliminar cotizaciones', 403);
+    }
+    await env.USUARIOS.delete(COT_PREFIX + folio);
+    if (cot.landingToken) await env.USUARIOS.delete(LANDING_PREFIX + cot.landingToken);
+    await auditar(env, request, actual.id, 'ELIMINAR_COTIZACION', { folio });
+    return json(env, { ok: true });
+  }
+
+  return error(env, 'Metodo no permitido', 405);
 }

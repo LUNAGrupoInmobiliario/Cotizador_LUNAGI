@@ -209,6 +209,105 @@ const h = await pedir('/api/health');
 check('manda X-Content-Type-Options', h.headers.get('X-Content-Type-Options') === 'nosniff');
 check('manda X-Frame-Options', h.headers.get('X-Frame-Options') === 'DENY');
 
+console.log('\n=== COTIZACIONES Y LANDINGS ===');
+env = nuevoEnv();
+await pedir('/api/bootstrap', {
+  metodo: 'POST', secret: BOOTSTRAP_SECRET,
+  body: { id: 'orlando falconi', nombre: 'Orlando Falconi', password: 'claveSuperAdmin1' }
+});
+r = await leer(await pedir('/api/login', { metodo: 'POST', body: { id: 'orlando falconi', password: 'claveSuperAdmin1' } }));
+const jefe = r.data.token;
+
+await pedir('/api/users', {
+  metodo: 'POST', token: jefe,
+  body: { id: 'yari@luna.com', nombre: 'Yaritza Lorzo', password: 'claveYaritza1', rol: 'ASESOR' }
+});
+r = await leer(await pedir('/api/login', { metodo: 'POST', body: { id: 'yari@luna.com', password: 'claveYaritza1' }, ip: '4.4.4.4' }));
+const vendedora = r.data.token;
+
+const cotBase = {
+  cliente: 'Maria Gonzalez', proyecto: 'Querena Campestre', asesor: 'Yaritza Lorzo',
+  manzana: 'B', lote: '12', moneda: 'MXN', precioM2: 3500, m2: 200,
+  precioPropiedad: 700000, apartado: 10000, engancheCalculado: 140000,
+  comisionApertura: 7000, montoFinanciar: 560000, tasaAnual: 12,
+  plazoMeses: 48, pagoMensual: 14750.32, totalPagar: 708015.36,
+  fechaReserva: '2026-07-25', fechaEnganche: '2026-07-26', fechaPrimerPago: '2026-08-01',
+  amortizacion: [
+    { fecha: '2026-08-01', balanceInicial: 560000, pago: 14750.32, interes: 5600, capital: 9150.32, balanceFinal: 550849.68 },
+    { fecha: '2026-09-01', balanceInicial: 550849.68, pago: 14750.32, interes: 5508.5, capital: 9241.82, balanceFinal: 541607.86 }
+  ]
+};
+
+r = await leer(await pedir('/api/cotizaciones', { metodo: 'POST', body: cotBase }));
+check('sin sesion no se puede crear una cotizacion', r.status === 401);
+
+r = await leer(await pedir('/api/cotizaciones', { metodo: 'POST', token: vendedora, body: cotBase }));
+check('la asesora crea una cotizacion', r.status === 201, JSON.stringify(r.data));
+check('devuelve folio', /^COT-\d{8}-[0-9A-F]{4}$/.test(r.data.folio || ''), r.data.folio);
+check('devuelve token de landing de 32 caracteres', (r.data.landingToken || '').length === 32);
+const folioYari = r.data.folio, tokenLanding = r.data.landingToken;
+
+r = await leer(await pedir('/api/cotizaciones', { metodo: 'POST', token: vendedora, body: { cliente: 'X' } }));
+check('exige cliente y proyecto', r.status === 400);
+
+// La landing es publica: se abre sin sesion
+let resp = await pedir('/landing/' + tokenLanding);
+let html = await resp.text();
+check('la landing abre sin necesidad de sesion', resp.status === 200);
+check('la landing es HTML', (resp.headers.get('Content-Type') || '').includes('text/html'));
+check('la landing no se indexa en buscadores', (resp.headers.get('X-Robots-Tag') || '').includes('noindex'));
+check('la landing muestra el nombre del cliente', html.includes('Maria Gonzalez'));
+check('la landing muestra el proyecto', html.includes('Querena Campestre'));
+check('la landing muestra el folio', html.includes(folioYari));
+check('la landing formatea el precio', html.includes('700,000.00'));
+check('la landing incluye la tabla de amortizacion', html.includes('550,849.68'));
+check('la landing avisa de la vigencia', html.toLowerCase().includes('vigencia'));
+
+resp = await pedir('/landing/tokenQueNoExiste123');
+check('un enlace invalido da 404 con pagina amable', resp.status === 404);
+check('el 404 explica que expiro', (await resp.text()).toLowerCase().includes('expiro'));
+
+// Seguridad: los datos del formulario no deben poder inyectar HTML
+r = await leer(await pedir('/api/cotizaciones', {
+  metodo: 'POST', token: vendedora,
+  body: Object.assign({}, cotBase, { cliente: '<script>alert(1)</' + 'script>', proyecto: '"><img src=x onerror=alert(2)>' })
+}));
+resp = await pedir('/landing/' + r.data.landingToken);
+html = await resp.text();
+// Lo que importa no es que el texto desaparezca, sino que no llegue a ser una
+// etiqueta real. El texto escapado si contiene "onerror=..." y es inofensivo.
+const cuerpo = html.slice(html.indexOf('<body'));
+check('la inyeccion no produce una etiqueta <script> real', !/<script/i.test(cuerpo), 'hay script real');
+check('la inyeccion no produce una etiqueta <img> real', !/<img/i.test(cuerpo), 'hay img real');
+check('queda como texto escapado y visible', html.includes('&lt;script&gt;') && html.includes('&lt;img'));
+
+// Visibilidad: cada quien ve lo suyo
+await pedir('/api/cotizaciones', { metodo: 'POST', token: jefe, body: Object.assign({}, cotBase, { cliente: 'Cliente del jefe' }) });
+r = await leer(await pedir('/api/cotizaciones', { token: vendedora }));
+check('la asesora solo ve sus 2 cotizaciones', r.data.items.length === 2, String(r.data.items.length));
+check('no ve las del superadmin', !r.data.items.some(c => c.cliente === 'Cliente del jefe'));
+
+r = await leer(await pedir('/api/cotizaciones', { token: jefe }));
+check('el superadmin ve las 3', r.data.items.length === 3, String(r.data.items.length));
+check('vienen de mas reciente a mas antigua',
+  r.data.items.every((it, i, a) => i === 0 || a[i - 1].creadoEn >= it.creadoEn));
+check('el listado no arrastra la tabla de amortizacion', r.data.items.every(c => c.amortizacion === undefined));
+
+r = await leer(await pedir('/api/cotizaciones/' + folioYari, { token: jefe }));
+check('el superadmin abre el detalle de una cotizacion ajena', r.status === 200 && r.data.cotizacion.cliente === 'Maria Gonzalez');
+
+// Borrado
+r = await leer(await pedir('/api/cotizaciones/' + folioYari, { metodo: 'DELETE', token: vendedora }));
+check('la asesora NO puede eliminar cotizaciones', r.status === 403);
+
+r = await leer(await pedir('/api/cotizaciones/' + folioYari, { metodo: 'DELETE', token: jefe }));
+check('el superadmin si puede eliminar', r.status === 200);
+resp = await pedir('/landing/' + tokenLanding);
+check('al eliminarla, su landing deja de abrir', resp.status === 404);
+
+r = await leer(await pedir('/api/audit?accion=CREAR_COTIZACION', { token: jefe }));
+check('la bitacora registra las cotizaciones creadas', r.data.items.length === 3, String(r.data.items.length));
+
 console.log('\n' + '='.repeat(50));
 console.log(pasan + ' pasan, ' + fallan + ' fallan');
 process.exit(fallan === 0 ? 0 : 1);

@@ -103,6 +103,19 @@
       return pedir('/api/users/' + encodeURIComponent(id), { metodo: 'DELETE' });
     },
 
+    // Cotizaciones
+    guardarCotizacion: function (datos) {
+      return pedir('/api/cotizaciones', { metodo: 'POST', body: datos });
+    },
+    listarCotizaciones: function () { return pedir('/api/cotizaciones'); },
+    verCotizacion: function (folio) {
+      return pedir('/api/cotizaciones/' + encodeURIComponent(folio));
+    },
+    eliminarCotizacion: function (folio) {
+      return pedir('/api/cotizaciones/' + encodeURIComponent(folio), { metodo: 'DELETE' });
+    },
+    urlLanding: function (token) { return API + '/landing/' + token; },
+
     // Bitacora (solo superadmin)
     bitacora: function (filtros) {
       filtros = filtros || {};

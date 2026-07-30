@@ -127,13 +127,43 @@
 </header>
 
 <div class="tabs">
-  <button class="tab activa" id="tab-usuarios" onclick="verPanel('usuarios')">Usuarios</button>
+  <button class="tab activa" id="tab-cotizaciones" onclick="verPanel('cotizaciones')">Cotizaciones</button>
+  <button class="tab" id="tab-usuarios" onclick="verPanel('usuarios')">Usuarios</button>
   <button class="tab" id="tab-bitacora" onclick="verPanel('bitacora')">Bitácora</button>
 </div>
 
 <main>
+  <!-- ── COTIZACIONES ─────────────────────────────────────── -->
+  <section class="panel activo" id="panel-cotizaciones">
+    <div class="aviso" id="aviso-cotizaciones"></div>
+
+    <div class="card">
+      <h2>Cotizaciones creadas</h2>
+      <div class="fila">
+        <div>
+          <label for="filtro-cot">Buscar</label>
+          <input type="text" id="filtro-cot" placeholder="Cliente, proyecto o asesor" oninput="pintarCotizaciones()">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-sec" onclick="cargarCotizaciones()" style="width:100%">Actualizar</button>
+        </div>
+      </div>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Folio</th><th>Cliente</th><th>Proyecto</th><th>Precio</th><th>Mensual</th><th>Asesor</th><th>Fecha</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tbody-cotizaciones">
+            <tr><td colspan="8" class="vacio">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="nota">🔗 abre la cotización tal como la ve el cliente. El enlace no pide contraseña y caduca a los 30 días de creado.</p>
+    </div>
+  </section>
+
   <!-- ── USUARIOS ─────────────────────────────────────────── -->
-  <section class="panel activo" id="panel-usuarios">
+  <section class="panel" id="panel-usuarios">
     <div class="aviso" id="aviso-usuarios"></div>
 
     <div class="card">
@@ -249,17 +279,85 @@
   }
 
   function verPanel(cual){
-    ['usuarios','bitacora'].forEach(function(p){
+    ['cotizaciones','usuarios','bitacora'].forEach(function(p){
       document.getElementById('panel-' + p).classList.toggle('activo', p === cual);
       document.getElementById('tab-' + p).classList.toggle('activa', p === cual);
     });
     if (cual === 'bitacora') cargarBitacora();
+    if (cual === 'cotizaciones') cargarCotizaciones();
+    if (cual === 'usuarios') cargarUsuarios();
   }
 
   async function salir(){
     if (!confirm('¿Cerrar sesión?')) return;
     await LunaAuth.logout();
     window.location.href = './index.html';
+  }
+
+  // ── Cotizaciones ────────────────────────────────────────
+  var _cotizaciones = [];
+
+  async function cargarCotizaciones(){
+    var tb = document.getElementById('tbody-cotizaciones');
+    try {
+      var r = await LunaAuth.listarCotizaciones();
+      _cotizaciones = r.items || [];
+      pintarCotizaciones();
+    } catch(e){
+      tb.innerHTML = '<tr><td colspan="8" class="vacio">No se pudo cargar: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  function pintarCotizaciones(){
+    var tb = document.getElementById('tbody-cotizaciones');
+    var q = document.getElementById('filtro-cot').value.trim().toLowerCase();
+    var lista = !q ? _cotizaciones : _cotizaciones.filter(function(c){
+      return [c.cliente, c.proyecto, c.asesor, c.folio].join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+
+    if (!lista.length){
+      tb.innerHTML = '<tr><td colspan="8" class="vacio">' +
+        (_cotizaciones.length ? 'Ninguna coincide con la búsqueda.' :
+         'Todavía no hay cotizaciones guardadas. Se crean desde el cotizador con “Guardar y compartir”.') +
+        '</td></tr>';
+      return;
+    }
+
+    var ahora = new Date();
+    tb.innerHTML = lista.map(function(c){
+      var vencida = c.landingExpira && new Date(c.landingExpira) < ahora;
+      var url = LunaAuth.urlLanding(c.landingToken);
+      return '<tr>' +
+        '<td class="mono">' + esc(c.folio) + '</td>' +
+        '<td>' + esc(c.cliente || '—') + '</td>' +
+        '<td>' + esc(c.proyecto || '—') + '</td>' +
+        '<td>' + esc(c.precioPropiedad || '—') + '</td>' +
+        '<td>' + esc(c.pagoMensual || '—') + '</td>' +
+        '<td>' + esc(c.asesor || c.creadoPor || '—') + '</td>' +
+        '<td>' + fecha(c.creadoEn) + '</td>' +
+        '<td><div class="acciones">' +
+          (vencida
+            ? '<span class="chip off" title="El enlace caducó a los 30 días">enlace vencido</span>'
+            : '<a class="btn-mini" href="' + esc(url) + '" target="_blank" rel="noopener" title="Abrir la cotización como la ve el cliente">🔗 Ver</a>' +
+              '<button class="btn-mini" onclick="copiarUrl(\'' + esc(url) + '\')">Copiar enlace</button>') +
+          '<button class="btn-mini peligro" onclick="borrarCotizacion(\'' + esc(c.folio) + '\')">Eliminar</button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function copiarUrl(url){
+    if (navigator.clipboard) navigator.clipboard.writeText(url);
+    avisar('cotizaciones','Enlace copiado. Ya puedes pegarlo en WhatsApp o correo.','ok');
+  }
+
+  async function borrarCotizacion(folio){
+    if (!confirm('¿Eliminar la cotización ' + folio + '?\n\nSu enlace dejará de funcionar de inmediato, incluso si ya se lo enviaste a alguien.')) return;
+    try {
+      await LunaAuth.eliminarCotizacion(folio);
+      avisar('cotizaciones','Cotización ' + folio + ' eliminada.','ok');
+      cargarCotizaciones();
+    } catch(e){ avisar('cotizaciones', e.message, 'error'); }
   }
 
   // ── Usuarios ────────────────────────────────────────────
@@ -395,7 +493,7 @@
       return;
     }
     document.getElementById('quien').textContent = (u.nombre || u.id) + ' · Superadmin';
-    cargarUsuarios();
+    cargarCotizaciones();
   })();
 </script>
 </body>

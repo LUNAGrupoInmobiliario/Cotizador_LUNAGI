@@ -66,8 +66,23 @@ Si responde `409`, ya existían usuarios: el bootstrap solo corre una vez.
 | `PUT` | `/api/users/<id>` | Superadmin | Cambia contraseña, nombre, rol o lo activa/desactiva |
 | `DELETE` | `/api/users/<id>` | Superadmin | Elimina un usuario |
 | `GET` | `/api/audit` | Superadmin | Bitácora (`?limite=100&usuario=&accion=`) |
+| `GET` | `/api/cotizaciones` | Autenticado | Lista. El asesor ve solo las suyas; el superadmin, todas |
+| `POST` | `/api/cotizaciones` | Autenticado | Guarda una cotización y devuelve su enlace de landing |
+| `GET` | `/api/cotizaciones/<folio>` | Autor o superadmin | Detalle completo |
+| `DELETE` | `/api/cotizaciones/<folio>` | Superadmin | La elimina junto con su landing |
+| `GET` | `/landing/<token>` | **Público** | La cotización en HTML, tal como la ve el cliente |
 
 Autenticación: cabecera `X-Auth-Token: <token>`.
+
+### Landings
+
+Al guardar una cotización se genera un token aleatorio de 32 caracteres y una URL `/landing/<token>`, pensada para enviarse por WhatsApp o correo:
+
+- **No pide contraseña**: quien tenga el enlace puede verla. Por eso el token es aleatorio y no un folio adivinable.
+- **Caduca a los 30 días** por sí sola (TTL del KV).
+- Lleva `X-Robots-Tag: noindex, nofollow` para que no la indexen los buscadores.
+- Todo dato que venga del formulario se escapa antes de meterlo en el HTML, así que un nombre con `<script>` se muestra como texto, no se ejecuta.
+- Al eliminar la cotización, su enlace deja de funcionar de inmediato.
 
 ---
 

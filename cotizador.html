@@ -642,7 +642,17 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
     </div>
     <div class="btn-row">
       <button class="btn btn-outline" onclick="limpiar()">Limpiar Formulario</button>
+      <button class="btn btn-outline no-print" id="btnCompartir" onclick="guardarYCompartir()">🔗 Guardar y compartir</button>
       <button class="btn btn-primary" onclick="imprimirPDF()">🖨️ Imprimir / Guardar PDF</button>
+    </div>
+    <div class="no-print" id="resultadoLanding" style="display:none;margin-top:14px;padding:14px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#1e40af;margin-bottom:7px">Enlace para el cliente</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="urlLanding" readonly style="flex:1;min-width:220px;padding:9px 11px;border:1px solid #bfdbfe;border-radius:8px;background:#fff;font-size:13px;font-family:ui-monospace,monospace">
+        <button class="btn btn-outline" style="padding:9px 14px" onclick="copiarLanding()">Copiar</button>
+        <button class="btn btn-outline" style="padding:9px 14px" onclick="window.open(document.getElementById('urlLanding').value,'_blank')">Abrir</button>
+      </div>
+      <div style="font-size:12px;color:#1e40af;margin-top:8px" id="notaLanding"></div>
     </div>
   </div>
 
@@ -1475,6 +1485,97 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
     window.addEventListener('scroll', syncLogoutBtn, { passive: true });
     syncLogoutBtn();
   })();
+
+  // ── Guardar la cotización y generar el enlace para el cliente ──────
+  function _txt(id){ var e = document.getElementById(id); return e ? (e.value !== undefined ? e.value : e.textContent).trim() : ''; }
+
+  /** Resuelve los selects que tienen opción "Otro (escribir)…". */
+  function _sel(idSelect, idOtro, idPrint){
+    var s = document.getElementById(idSelect);
+    if (s && s.value && s.value !== '__otro__') return s.value;
+    var o = _txt(idOtro);
+    if (o) return o;
+    return _txt(idPrint);
+  }
+
+  function _amortizacion(){
+    var filas = [];
+    var tb = document.getElementById('tbodyAmort');
+    if (!tb) return filas;
+    Array.prototype.forEach.call(tb.querySelectorAll('tr'), function(tr){
+      var c = tr.querySelectorAll('td');
+      if (c.length < 6) return;                       // salta filas de aviso o subtotales
+      filas.push({
+        fecha: c[0].textContent.trim(),
+        balanceInicial: c[1].textContent.trim(),
+        pago: c[2].textContent.trim(),
+        interes: c[3].textContent.trim(),
+        capital: c[4].textContent.trim(),
+        balanceFinal: c[5].textContent.trim()
+      });
+    });
+    return filas;
+  }
+
+  async function guardarYCompartir(){
+    var btn = document.getElementById('btnCompartir');
+    var cliente = _txt('nombreInversionista');
+    var proyecto = _sel('nombreProyecto', 'nombreProyectoOtro', 'nombreProyectoPrint');
+
+    if (!cliente || !proyecto){
+      alert('Antes de compartir, captura el nombre del inversionista y elige el proyecto.');
+      return;
+    }
+
+    var original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      var r = await LunaAuth.guardarCotizacion({
+        cliente: cliente,
+        proyecto: proyecto,
+        asesor: _sel('nombreAsesorSel', 'nombreAsesor', 'nombreAsesorPrint'),
+        manzana: _txt('manzana'),
+        lote: _txt('lote'),
+        moneda: _txt('moneda') || 'MXN',
+        tipoCambio: _txt('tipoCambio'),
+        precioM2: _txt('precioM2'),
+        m2: _txt('m2Lote'),
+        precioPropiedad: _txt('s-precio') || _txt('precio'),
+        apartado: _txt('apartado'),
+        engancheCalculado: _txt('engancheCalc'),
+        comisionApertura: _txt('comisionCalc'),
+        montoFinanciar: _txt('montoFinanciarCalc'),
+        tasaAnual: _txt('tasaAnual'),
+        plazoMeses: _txt('plazo'),
+        pagoMensual: _txt('s-mensual'),
+        totalPagar: _txt('s-total'),
+        fechaReserva: _txt('fechaReserva'),
+        fechaEnganche: _txt('fechaEnganche'),
+        fechaPrimerPago: _txt('fechaPrimerPago'),
+        amortizacion: _amortizacion()
+      });
+
+      document.getElementById('urlLanding').value = r.landingUrl;
+      document.getElementById('notaLanding').textContent =
+        'Folio ' + r.folio + '. El enlace funciona 30 días y no requiere contraseña: cualquiera que lo tenga puede ver la cotización.';
+      document.getElementById('resultadoLanding').style.display = '';
+    } catch(e){
+      alert('No se pudo guardar: ' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = original;
+    }
+  }
+
+  function copiarLanding(){
+    var i = document.getElementById('urlLanding');
+    i.select(); i.setSelectionRange(0, 99999);
+    if (navigator.clipboard) navigator.clipboard.writeText(i.value);
+    else document.execCommand('copy');
+    var n = document.getElementById('notaLanding');
+    var antes = n.textContent;
+    n.textContent = 'Enlace copiado. Ya puedes pegarlo en WhatsApp o correo.';
+    setTimeout(function(){ n.textContent = antes; }, 2500);
+  }
 
   // Confirma con el servidor que la sesión sigue siendo válida (pudo vencer o
   // el superadmin pudo cambiar la contraseña) y muestra el acceso al panel

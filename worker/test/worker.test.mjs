@@ -308,6 +308,37 @@ check('al eliminarla, su landing deja de abrir', resp.status === 404);
 r = await leer(await pedir('/api/audit?accion=CREAR_COTIZACION', { token: jefe }));
 check('la bitacora registra las cotizaciones creadas', r.data.items.length === 3, String(r.data.items.length));
 
+console.log('\n=== USUARIOS ANTIGUOS (regresion) ===');
+// Un usuario creado antes de que existieran los permisos de cotizaciones tiene
+// guardado el numero viejo. Debe seguir pudiendo hacer todo lo de su rol sin
+// necesidad de migrarlo a mano.
+env = nuevoEnv();
+await pedir('/api/bootstrap', {
+  metodo: 'POST', secret: BOOTSTRAP_SECRET,
+  body: { id: 'jefe', nombre: 'Jefe Antiguo', password: 'claveAntigua1' }
+});
+const claveKV = 'user:jefe';
+const viejo = JSON.parse(await env.USUARIOS.get(claveKV));
+viejo.permissions = 193;  // valor de antes de la Fase 2
+await env.USUARIOS.put(claveKV, JSON.stringify(viejo));
+check('el usuario quedo con los permisos viejos (193)',
+  JSON.parse(await env.USUARIOS.get(claveKV)).permissions === 193);
+
+r = await leer(await pedir('/api/login', { metodo: 'POST', body: { id: 'jefe', password: 'claveAntigua1' }, ip: '6.6.6.6' }));
+const tokenViejo = r.data.token;
+check('el login le devuelve los permisos ya actualizados', r.data.usuario.permissions === 203, String(r.data.usuario.permissions));
+
+r = await leer(await pedir('/api/cotizaciones', {
+  metodo: 'POST', token: tokenViejo, body: { cliente: 'Cliente', proyecto: 'Proyecto' }
+}));
+check('puede crear cotizaciones pese al numero viejo', r.status === 201, 'status ' + r.status);
+
+r = await leer(await pedir('/api/cotizaciones', { token: tokenViejo }));
+check('ve las cotizaciones', r.status === 200 && r.data.items.length === 1);
+
+r = await leer(await pedir('/api/users', { token: tokenViejo }));
+check('conserva la gestion de usuarios', r.status === 200);
+
 console.log('\n' + '='.repeat(50));
 console.log(pasan + ' pasan, ' + fallan + ' fallan');
 process.exit(fallan === 0 ? 0 : 1);

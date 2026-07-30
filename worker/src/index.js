@@ -134,6 +134,10 @@ async function getUserByToken(env, token) {
   if (!raw) return null;
   const user = JSON.parse(raw);
   if (user.activo === false) return null;
+  // Los permisos se recalculan desde el rol en cada peticion. Si se guardara
+  // solo el numero, los usuarios creados antes de agregar un permiso nuevo se
+  // quedarian sin el hasta migrarlos a mano. El rol es la fuente de verdad.
+  if (ROLES[user.rol] !== undefined) user.permissions = ROLES[user.rol];
   return { id, ...user };
 }
 
@@ -147,7 +151,7 @@ function userPublico(id, u) {
     id,
     nombre: u.nombre,
     rol: u.rol,
-    permissions: u.permissions,
+    permissions: ROLES[u.rol] !== undefined ? ROLES[u.rol] : u.permissions,
     activo: u.activo !== false,
     creadoEn: u.creadoEn,
     creadoPor: u.creadoPor,

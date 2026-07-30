@@ -1,0 +1,17 @@
+name = "lunagi-coti-api"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+# Secreto para crear el primer superadmin (una sola vez):
+#   npx wrangler secret put BOOTSTRAP_SECRET
+#
+# Binding KV (rellenar el id tras crear el namespace):
+#   npx wrangler kv namespace create USUARIOS
+[[kv_namespaces]]
+binding = "USUARIOS"
+id = "PENDIENTE_CREAR_NAMESPACE"
+
+[vars]
+# Origen permitido para CORS. Cambiar si el frontend se muda de dominio.
+ALLOWED_ORIGIN = "https://lunagrupoinmobiliario.github.io"

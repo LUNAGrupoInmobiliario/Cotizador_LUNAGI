@@ -439,9 +439,22 @@ function fechaLarga(iso) {
   } catch (e) { return escHtml(iso); }
 }
 
-function paginaSimple(titulo, mensaje) {
+const SITIO_POR_DEFECTO = 'https://lunagrupoinmobiliario.github.io/Cotizador_LUNAGI';
+
+/** Mismo favicon que el cotizador. Va con URL absoluta porque el Worker
+ *  responde desde otro dominio y las rutas relativas no resolverian. */
+function favicons(base) {
+  const b = (base || SITIO_POR_DEFECTO).replace(/\/+$/, '');
+  return '<link rel="icon" href="' + b + '/favicon.ico">' +
+    '<link rel="icon" type="image/png" sizes="32x32" href="' + b + '/favicon-32x32.png">' +
+    '<link rel="icon" type="image/png" sizes="16x16" href="' + b + '/favicon-16x16.png">' +
+    '<link rel="apple-touch-icon" sizes="180x180" href="' + b + '/apple-touch-icon.png">';
+}
+
+function paginaSimple(titulo, mensaje, base) {
   return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    favicons(base) +
     '<title>' + escHtml(titulo) + '</title></head>' +
     '<body style="font-family:system-ui,sans-serif;background:#f3f4f6;margin:0;' +
     'display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px">' +
@@ -452,7 +465,7 @@ function paginaSimple(titulo, mensaje) {
     '</div></body></html>';
 }
 
-function htmlLanding(c) {
+function htmlLanding(c, base) {
   const m = c.moneda;
   const filas = (c.amortizacion || []).map(function (f, i) {
     return '<tr><td>' + (i + 1) + '</td><td>' + escHtml(f.fecha || '') + '</td>' +
@@ -473,6 +486,7 @@ function htmlLanding(c) {
 '<meta name="theme-color" content="#134289">' +
 '<meta name="robots" content="noindex,nofollow">' +
 '<title>Cotizacion ' + escHtml(c.folio) + ' — LUNA Grupo Inmobiliario</title>' +
+favicons(base) +
 '<link rel="preconnect" href="https://fonts.googleapis.com">' +
 '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
 '<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
@@ -558,7 +572,9 @@ function htmlLanding(c) {
 }
 
 async function landing(request, env, token) {
-  if (!token) return new Response(paginaSimple('Enlace incompleto', 'El enlace no esta completo.'), {
+  const base = env.SITIO_BASE;
+
+  if (!token) return new Response(paginaSimple('Enlace incompleto', 'El enlace no esta completo.', base), {
     status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' }
   });
 
@@ -566,7 +582,8 @@ async function landing(request, env, token) {
   if (!folio) {
     return new Response(paginaSimple(
       'Enlace no disponible',
-      'Este enlace ya expiro o no es valido. Los enlaces de cotizacion duran 30 dias. Pide uno nuevo a tu asesor.'
+      'Este enlace ya expiro o no es valido. Los enlaces de cotizacion duran 30 dias. Pide uno nuevo a tu asesor.',
+      base
     ), { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
@@ -574,11 +591,12 @@ async function landing(request, env, token) {
   if (!raw) {
     return new Response(paginaSimple(
       'Cotizacion no disponible',
-      'La cotizacion asociada a este enlace ya no existe.'
+      'La cotizacion asociada a este enlace ya no existe.',
+      base
     ), { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
-  return new Response(htmlLanding(JSON.parse(raw)), {
+  return new Response(htmlLanding(JSON.parse(raw), base), {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'X-Content-Type-Options': 'nosniff',

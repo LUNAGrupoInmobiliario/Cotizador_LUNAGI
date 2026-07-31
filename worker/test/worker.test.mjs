@@ -263,9 +263,16 @@ check('la landing formatea el precio', html.includes('700,000.00'));
 check('la landing incluye la tabla de amortizacion', html.includes('550,849.68'));
 check('la landing avisa de la vigencia', html.toLowerCase().includes('vigencia'));
 
+check('la landing usa el mismo favicon que el cotizador',
+  html.includes('/favicon.ico') && html.includes('/favicon-32x32.png'));
+check('el favicon va con URL absoluta (el Worker esta en otro dominio)',
+  html.includes('https://lunagrupoinmobiliario.github.io/Cotizador_LUNAGI/favicon.ico'));
+
 resp = await pedir('/landing/tokenQueNoExiste123');
+const html404 = await resp.text();
 check('un enlace invalido da 404 con pagina amable', resp.status === 404);
-check('el 404 explica que expiro', (await resp.text()).toLowerCase().includes('expiro'));
+check('el 404 explica que expiro', html404.toLowerCase().includes('expiro'));
+check('la pagina de error tambien lleva el favicon', html404.includes('/favicon.ico'));
 
 // Seguridad: los datos del formulario no deben poder inyectar HTML
 r = await leer(await pedir('/api/cotizaciones', {

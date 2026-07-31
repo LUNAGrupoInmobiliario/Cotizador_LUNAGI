@@ -20,20 +20,24 @@ function crearKV() {
 }
 
 const BOOTSTRAP_SECRET = 'secreto-de-prueba-12345';
+const ORIGEN_NUEVO = 'https://lunagi-cotizador.pages.dev';
+const ORIGEN_VIEJO = 'https://lunagrupoinmobiliario.github.io';
 let env;
 
 function nuevoEnv() {
   return {
     USUARIOS: crearKV(),
     BOOTSTRAP_SECRET,
-    ALLOWED_ORIGIN: 'https://lunagrupoinmobiliario.github.io'
+    ALLOWED_ORIGIN: ORIGEN_NUEVO + ',' + ORIGEN_VIEJO,
+    SITIO_BASE: ORIGEN_NUEVO
   };
 }
 
-function pedir(ruta, { metodo = 'GET', body, token, secret, ip = '1.2.3.4' } = {}) {
+function pedir(ruta, { metodo = 'GET', body, token, secret, ip = '1.2.3.4', origen } = {}) {
   const headers = { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip };
   if (token) headers['X-Auth-Token'] = token;
   if (secret) headers['X-Bootstrap-Secret'] = secret;
+  if (origen) headers['Origin'] = origen;
   return worker.fetch(new Request('https://api.test' + ruta, {
     method: metodo,
     headers,
@@ -200,11 +204,30 @@ r = await leer(await pedir('/api/users', { token: admin }));
 check('queda solo el superadmin', r.data.items.length === 1, JSON.stringify(r.data.items.map(i => i.id)));
 
 console.log('\n=== CORS Y CABECERAS ===');
-const opt = await pedir('/api/login', { metodo: 'OPTIONS' });
+const opt = await pedir('/api/login', { metodo: 'OPTIONS', origen: ORIGEN_NUEVO });
 check('responde al preflight OPTIONS', opt.status === 204);
-check('CORS restringido al dominio del cotizador',
-  opt.headers.get('Access-Control-Allow-Origin') === 'https://lunagrupoinmobiliario.github.io',
+check('devuelve el origen nuevo cuando llama desde Pages',
+  opt.headers.get('Access-Control-Allow-Origin') === ORIGEN_NUEVO,
   opt.headers.get('Access-Control-Allow-Origin'));
+
+const optViejo = await pedir('/api/login', { metodo: 'OPTIONS', origen: ORIGEN_VIEJO });
+check('durante la migracion sigue aceptando el origen viejo',
+  optViejo.headers.get('Access-Control-Allow-Origin') === ORIGEN_VIEJO,
+  optViejo.headers.get('Access-Control-Allow-Origin'));
+
+const optIntruso = await pedir('/api/login', { metodo: 'OPTIONS', origen: 'https://sitio-malicioso.com' });
+check('NO devuelve el origen de una web ajena',
+  optIntruso.headers.get('Access-Control-Allow-Origin') !== 'https://sitio-malicioso.com',
+  optIntruso.headers.get('Access-Control-Allow-Origin'));
+check('nunca responde con comodin *',
+  optIntruso.headers.get('Access-Control-Allow-Origin') !== '*');
+check('marca Vary: Origin para que las caches no mezclen respuestas',
+  (opt.headers.get('Vary') || '').includes('Origin'));
+
+const loginCors = await pedir('/api/login', { metodo: 'POST', body: { id: 'x', password: 'y' }, origen: ORIGEN_NUEVO, ip: '1.9.9.9' });
+check('las respuestas JSON tambien llevan el origen correcto',
+  loginCors.headers.get('Access-Control-Allow-Origin') === ORIGEN_NUEVO,
+  loginCors.headers.get('Access-Control-Allow-Origin'));
 const h = await pedir('/api/health');
 check('manda X-Content-Type-Options', h.headers.get('X-Content-Type-Options') === 'nosniff');
 check('manda X-Frame-Options', h.headers.get('X-Frame-Options') === 'DENY');
@@ -266,7 +289,7 @@ check('la landing avisa de la vigencia', html.toLowerCase().includes('vigencia')
 check('la landing usa el mismo favicon que el cotizador',
   html.includes('/favicon.ico') && html.includes('/favicon-32x32.png'));
 check('el favicon va con URL absoluta (el Worker esta en otro dominio)',
-  html.includes('https://lunagrupoinmobiliario.github.io/Cotizador_LUNAGI/favicon.ico'));
+  html.includes(ORIGEN_NUEVO + '/favicon.ico'));
 
 resp = await pedir('/landing/tokenQueNoExiste123');
 const html404 = await resp.text();

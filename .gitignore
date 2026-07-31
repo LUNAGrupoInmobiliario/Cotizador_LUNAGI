@@ -1,0 +1,4 @@
+# Salida de build para Cloudflare Pages: se regenera con deploy.ps1
+_site/
+.wrangler/
+node_modules/

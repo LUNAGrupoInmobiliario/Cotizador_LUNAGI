@@ -100,16 +100,28 @@ async function checkRateLimit(env, clave, maximo) {
 
 // ── Respuestas ────────────────────────────────────────────────────────
 
-function corsHeaders(env) {
+/** ALLOWED_ORIGIN acepta varios origenes separados por coma. Se devuelve el
+ *  del solicitante solo si esta en la lista; nunca '*', porque con '*' el
+ *  navegador dejaria que cualquier web llamara a esta API. */
+function origenPermitido(env, request) {
+  const permitidos = String(env.ALLOWED_ORIGIN || '')
+    .split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
+  const origen = (request && request.headers.get('Origin') || '').replace(/\/+$/, '');
+  if (origen && permitidos.includes(origen)) return origen;
+  return permitidos[0] || '';
+}
+
+function corsHeaders(env, request) {
   return {
-    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
+    'Access-Control-Allow-Origin': origenPermitido(env, request),
+    'Vary': 'Origin',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type,X-Auth-Token',
     'Access-Control-Max-Age': '86400'
   };
 }
 
-function json(env, data, status = 200) {
+function json(env, data, status = 200, request = null) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -117,12 +129,12 @@ function json(env, data, status = 200) {
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
       'Cache-Control': 'no-store',
-      ...corsHeaders(env)
+      ...corsHeaders(env, request)
     }
   });
 }
 
-const error = (env, msg, status) => json(env, { error: msg }, status);
+const error = (env, msg, status, request = null) => json(env, { error: msg }, status, request);
 
 // ── Usuarios y auditoria ──────────────────────────────────────────────
 
@@ -179,12 +191,29 @@ async function auditar(env, request, usuario, accion, detalles = {}) {
 
 export default {
   async fetch(request, env) {
+    const resp = await manejar(request, env);
+    // Ajuste final del CORS al origen real de quien llama. Se hace aqui para no
+    // tener que pasar `request` en cada una de las decenas de llamadas a json().
+    // Las landings son HTML publico y no lo necesitan.
+    const tipo = resp.headers.get('Content-Type') || '';
+    if (tipo.includes('application/json') || resp.status === 204) {
+      const h = new Headers(resp.headers);
+      h.set('Access-Control-Allow-Origin', origenPermitido(env, request));
+      h.set('Vary', 'Origin');
+      return new Response(resp.body, { status: resp.status, headers: h });
+    }
+    return resp;
+  }
+};
+
+async function manejar(request, env) {
+  {
     const url = new URL(request.url);
     const ruta = url.pathname.replace(/\/+$/, '') || '/';
     const metodo = request.method;
 
     if (metodo === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders(env) });
+      return new Response(null, { status: 204, headers: corsHeaders(env, request) });
     }
 
     if (!env.USUARIOS) {
@@ -224,7 +253,7 @@ export default {
       return error(env, 'Error interno: ' + e.message, 500);
     }
   }
-};
+}
 
 // ── Handlers ──────────────────────────────────────────────────────────
 
@@ -439,7 +468,7 @@ function fechaLarga(iso) {
   } catch (e) { return escHtml(iso); }
 }
 
-const SITIO_POR_DEFECTO = 'https://lunagrupoinmobiliario.github.io/Cotizador_LUNAGI';
+const SITIO_POR_DEFECTO = 'https://lunagi-cotizador.pages.dev';
 
 /** Mismo favicon que el cotizador. Va con URL absoluta porque el Worker
  *  responde desde otro dominio y las rutas relativas no resolverian. */

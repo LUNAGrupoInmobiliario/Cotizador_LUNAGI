@@ -1,9 +1,9 @@
 /**
  * Cliente de la API del Cotizador LUNA GI.
  *
- * Lo incluyen index.html, login.html, cotizador.html y admin.html, para que la
- * URL de la API y el manejo de sesion vivan en UN solo lugar. Antes la lista de
- * usuarios estaba copiada en dos archivos y se desincronizaban.
+ * Lo incluyen index.html, cotizador.html y admin.html, para que la URL de la
+ * API y el manejo de sesion vivan en UN solo lugar. Antes la lista de usuarios
+ * estaba copiada en dos archivos y se desincronizaban.
  */
 (function (global) {
   'use strict';

@@ -342,7 +342,7 @@ input[readonly] { background: var(--surface); cursor: not-allowed; }
   // Corte inmediato para no alcanzar a mostrar el cotizador a quien no entró.
   // La validación real contra el servidor va al final del archivo.
   if (!sessionStorage.getItem("luna_auth")) {
-    window.location.href = "./login.html";
+    window.location.href = "./index.html";
   }
 </script>
 </head>
@@ -1582,7 +1582,7 @@ const apartadoRaw = Math.max(0, getNum('apartado'));
   // solo si quien entró es superadmin.
   (async function () {
     var u = await LunaAuth.verificarSesion();
-    if (!u) { window.location.href = './login.html'; return; }
+    if (!u) { window.location.href = './index.html'; return; }
     if (u.rol === 'SUPERADMIN') {
       var panel = document.getElementById('panelBtn');
       if (panel) panel.style.display = '';
